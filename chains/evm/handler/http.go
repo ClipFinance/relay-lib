@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"github.com/ClipFinance/relay-lib/common/types"
 	"github.com/ClipFinance/relay-lib/common/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -164,7 +163,7 @@ func (h *EventHandler) processBlockRange(fromBlock, toBlock uint64) error {
 	}
 
 	for _, log := range transferResult.logs {
-		if err := h.processEvent("Transfer", log); err != nil {
+		if err := h.processEvent(utils.GetEventType(log), log); err != nil {
 			h.logger.WithFields(logrus.Fields{
 				"chain":     h.chainConfig.Name,
 				"eventType": "transfer",
@@ -173,90 +172,6 @@ func (h *EventHandler) processBlockRange(fromBlock, toBlock uint64) error {
 			}).WithError(err).Error("Failed to process transfer log")
 		}
 	}
-
-	return nil
-}
-
-// processEvent processes a single event log and sends it to the event channel.
-//
-// Parameters:
-// - eventType: the type of the event (e.g., "relay", "transfer").
-// - log: the event log to process.
-//
-// Returns:
-// - error: an error if any issue occurs during event processing.
-func (h *EventHandler) processEvent(eventType string, log ethtypes.Log) error {
-	tx, _, err := h.client.TransactionByHash(h.ctx, log.TxHash)
-	if err != nil {
-		return errors.Wrap(err, "failed to get transaction by hash")
-	}
-
-	// Get Tx Sender
-	signer := ethtypes.LatestSignerForChainID(tx.ChainId())
-	fromAddress, err := ethtypes.Sender(signer, tx)
-	if err != nil {
-		return errors.Wrap(err, "failed to get transaction sender")
-	}
-
-	var quoteId string
-	var amount string
-
-	switch eventType {
-	case "FundsForwardedWithData":
-		quoteId, err = utils.ExtractQuoteIDFromTxData(tx.Data())
-		if err != nil {
-			return errors.Wrap(err, "failed to extract quoteId from FundsForwardedWithData event")
-		}
-		quoteId = "0x" + quoteId
-		amount = tx.Value().String()
-
-	case "FundsForwarded":
-		quoteId = string(tx.Data())
-		amount = tx.Value().String()
-
-	case "Transfer":
-		input := tx.Data()
-		quoteId, err = utils.ExtractQuoteIDFromTxData(input)
-		if err != nil {
-			return errors.Wrap(err, "failed to extract quoteId from Transfer event")
-		}
-		quoteId = "0x" + quoteId
-
-		amount = new(big.Int).SetBytes(log.Data).String()
-
-	default:
-		return errors.New("unknown event type: " + eventType)
-	}
-
-	block, err := h.client.HeaderByNumber(h.ctx, new(big.Int).SetUint64(log.BlockNumber))
-	if err != nil {
-		return errors.Wrap(err, "failed to get block time")
-	}
-
-	chainEvent := types.ChainEvent{
-		ChainID:           h.chainConfig.ChainID,
-		BlockNumber:       log.BlockNumber,
-		BlockHash:         log.BlockHash.String(),
-		FromTokenAddr:     log.Address.String(),
-		FromAddress:       fromAddress.Hex(),
-		ToAddress:         tx.To().Hex(),
-		TransactionHash:   log.TxHash.String(),
-		QuoteID:           quoteId,
-		FromTxMinedAt:     time.Unix(int64(block.Time), 0),
-		FromNonce:         tx.Nonce(),
-		TransactionAmount: amount,
-	}
-
-	h.eventChan <- chainEvent
-
-	h.logger.WithFields(logrus.Fields{
-		"chain":       h.chainConfig.Name,
-		"eventType":   eventType,
-		"blockNumber": log.BlockNumber,
-		"blockHash":   log.BlockHash.Hex(),
-		"txHash":      log.TxHash.Hex(),
-		"quoteId":     quoteId,
-	}).Info("Successfully received event")
 
 	return nil
 }

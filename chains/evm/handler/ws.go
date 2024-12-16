@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"github.com/ClipFinance/relay-lib/common/types"
+	"github.com/ClipFinance/relay-lib/common/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -108,53 +108,17 @@ func (h *EventHandler) handleEvents() {
 			}
 
 		case event := <-h.relaySubscription.EventChan:
-			h.handleRelayEvent(event)
+			err := h.processEvent(utils.GetEventType(event), event)
+			if err != nil {
+				h.logger.WithError(err).Error("Failed to process relay event")
+			}
 
 		case event := <-h.transferSubscription.EventChan:
-			h.handleTransferEvent(event)
+			err := h.processEvent(utils.GetEventType(event), event)
+			if err != nil {
+				h.logger.WithError(err).Error("Failed to process transfer event")
+			}
 		}
-	}
-}
-
-// handleRelayEvent processes a relay event and sends it to the event channel.
-//
-// Parameters:
-// - event: the relay event log to process.
-func (h *EventHandler) handleRelayEvent(event ethtypes.Log) {
-	chainEvent := types.ChainEvent{
-		ChainID:     h.chainConfig.ChainID,
-		EventType:   "relay",
-		BlockNumber: event.BlockNumber,
-		TxHash:      event.TxHash.Hex(),
-		LogIndex:    event.Index,
-		Data:        event.Data,
-	}
-
-	select {
-	case h.eventChan <- chainEvent:
-	default:
-		h.logger.Warn("Event channel full, skipping relay event")
-	}
-}
-
-// handleTransferEvent processes a transfer event and sends it to the event channel.
-//
-// Parameters:
-// - event: the transfer event log to process.
-func (h *EventHandler) handleTransferEvent(event ethtypes.Log) {
-	chainEvent := types.ChainEvent{
-		ChainID:     h.chainConfig.ChainID,
-		EventType:   "transfer",
-		BlockNumber: event.BlockNumber,
-		TxHash:      event.TxHash.Hex(),
-		LogIndex:    event.Index,
-		Data:        event.Data,
-	}
-
-	select {
-	case h.eventChan <- chainEvent:
-	default:
-		h.logger.Warn("Event channel full, skipping transfer event")
 	}
 }
 
