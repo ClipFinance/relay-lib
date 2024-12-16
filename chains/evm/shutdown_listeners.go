@@ -9,4 +9,6 @@ func (e *evm) ShutdownListeners() {
 		e.eventHandler.Stop()
 		e.eventHandler = nil
 	}
+
+	e.client.Close()
 }
