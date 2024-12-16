@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"github.com/ClipFinance/relay-lib/common/types"
-	"time"
 )
 
 // InsertIntent inserts or updates an intent in the database.
@@ -66,14 +65,14 @@ func (r *DBConfig) InsertIntent(ctx context.Context, intent *types.Intent) error
 		intent.FromNonce,
 		intent.Status,
 		intent.SubStatus,
-		intent.RequestedAt.Format(time.RFC822Z),
-		intent.FromTxMinedAt.Format(time.RFC822Z),
-		intent.ToTxSetAt.Format(time.RFC822Z),
-		intent.ToTxMinedAt.Format(time.RFC822Z),
+		intent.RequestedAt,
+		intent.FromTxMinedAt,
+		intent.ToTxSetAt,
+		intent.ToTxMinedAt,
 		intent.Refund,
 		intent.RefundTx,
-		intent.RefundTxSetAt.Format(time.RFC822Z),
-		intent.RefundTxMinedAt.Format(time.RFC822Z),
+		intent.RefundTxSetAt,
+		intent.RefundTxMinedAt,
 		intent.BlockHash,
 	)
 
