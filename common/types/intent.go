@@ -1,28 +1,63 @@
 package types
 
-// Intent represents a cross-chain transaction intent with its current state
+import (
+	"math/big"
+	"time"
+)
+
+// RelayData represents the data needed to relay a cross-chain transaction.
+type RelayData struct {
+	QuoteId       string
+	Depositor     string
+	Recipient     string
+	DestChainId   *big.Int
+	InputToken    string
+	InputAmount   *big.Int
+	OriginChainId *big.Int
+	OutputToken   string
+	OutputAmount  *big.Int
+}
+
+// Intent represents a cross-chain transaction intent with its current state.
 type Intent struct {
-	QuoteID          string  // Unique identifier of the quote
-	FromChain        int     // Source chain ID
-	FromToken        string  // Source token address
-	FromAmount       string  // Amount to be sent from source chain
-	ToChain          int     // Destination chain ID
-	ToToken          string  // Destination token address
-	ToAmount         string  // Amount to be received on destination chain
-	UserAddress      string  // User's wallet address
-	RecipientAddress string  // Recipient's wallet address
-	FromTx           string  // Transaction hash on source chain
-	FromNonce        uint64  // Nonce of the transaction on source chain
-	Status           string  // Current status of the intent
-	SubStatus        *string // Additional status details
-	QuoteRequestedAt string  // Timestamp when quote was requested
-	FromTxMinedAt    string  // Timestamp when source transaction was mined
-	ToTxSentAt       *string // Timestamp when destination transaction was sent
-	ToTxMinedAt      *string // Timestamp when destination transaction was mined
-	Refund           bool    // Whether a refund was required
-	RefundTx         *string // Refund transaction hash if any
-	RefundTxSetAt    *string // Timestamp when refund was initiated
-	RefundTxMinedAt  *string // Timestamp when refund was completed
-	BlockHash        string  // Block hash where the intent was created
-	Quorum           int     // Number of confirmations received
+	ID               int64
+	QuoteID          string
+	FromChain        uint64
+	FromToken        string
+	FromAmount       *big.Int
+	ToChain          uint64
+	ToToken          string
+	ToAmount         *big.Int
+	UserAddress      string
+	RecipientAddress string
+	FromTx           string
+	FromNonce        uint64
+	ToTx             *string
+	Status           IntentStatus
+	SubStatus        *string
+	RequestedAt      time.Time
+	FromTxMinedAt    time.Time
+	ToTxSentAt       *time.Time
+	ToTxMinedAt      *time.Time
+	Refund           *bool
+	RefundTx         *string
+	RefundTxSetAt    *time.Time
+	RefundTxMinedAt  *time.Time
+	BlockHash        string
+	Quorum           int
+}
+
+// ConvertIntentToRelayData converts Intent to RelayData.
+func (i *Intent) ConvertIntentToRelayData() *RelayData {
+	return &RelayData{
+		QuoteId:       i.QuoteID,
+		Depositor:     i.UserAddress,
+		Recipient:     i.RecipientAddress,
+		DestChainId:   new(big.Int).SetUint64(i.ToChain),
+		InputToken:    i.FromToken,
+		InputAmount:   i.FromAmount,
+		OriginChainId: new(big.Int).SetUint64(i.FromChain),
+		OutputToken:   i.ToToken,
+		OutputAmount:  i.ToAmount,
+	}
 }

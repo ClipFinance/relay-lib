@@ -65,7 +65,7 @@ func (r *DBConfig) InsertIntent(ctx context.Context, intent *types.Intent) error
 		intent.FromNonce,
 		intent.Status,
 		intent.SubStatus,
-		intent.QuoteRequestedAt,
+		intent.RequestedAt,
 		intent.FromTxMinedAt,
 		intent.ToTxSentAt,
 		intent.ToTxMinedAt,
