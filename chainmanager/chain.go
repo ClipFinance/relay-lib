@@ -92,6 +92,26 @@ func (c *Chain) InitHTTPPolling(ctx context.Context, eventChan chan commontypes.
 	return c.handler.InitHTTPPolling(ctx, eventChan)
 }
 
+// ValidateTransaction validates a transaction based on the quote and the event.
+//
+// Parameters:
+// - ctx: the context for managing the request.
+// - quote: the quote containing transaction details.
+// - event: the event containing chain event details.
+//
+// Returns:
+// - error: an error if the transaction validation fails.
+func (c *Chain) ValidateTransaction(ctx context.Context, quote *commontypes.Quote, event commontypes.ChainEvent) error {
+	c.handlerMutex.RLock()
+	defer c.handlerMutex.RUnlock()
+
+	if c.handler == nil {
+		return errors.ErrNotImplemented
+	}
+
+	return c.handler.ValidateTransaction(ctx, quote, event)
+}
+
 // ShutdownListeners stops all active subscriptions and event handlers.
 func (c *Chain) ShutdownListeners() {
 	c.handlerMutex.RLock()

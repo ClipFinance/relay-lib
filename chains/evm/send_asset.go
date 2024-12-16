@@ -36,7 +36,7 @@ func (e *evm) SendAsset(ctx context.Context, intent *types.TransactionIntent) (*
 	}
 
 	var tx *ethtypes.Transaction
-	if intent.ToToken == "0x0000000000000000000000000000000000000000" {
+	if intent.ToToken == types.ZeroAddress {
 		tx, err = e.sendNativeAsset(ctx, intent, nonce)
 	} else {
 		tx, err = e.sendToken(ctx, intent, nonce)

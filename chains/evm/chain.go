@@ -27,9 +27,10 @@ const (
 
 // evm represents the base EVM chain implementation.
 type evm struct {
-	config        *types.ChainConfig // Chain configuration.
-	logger        *logrus.Logger     // Logger for logging events.
-	solverAddress common.Address     // Solver address.
+	config             *types.ChainConfig // Chain configuration.
+	logger             *logrus.Logger     // Logger for logging events.
+	solverAddress      common.Address     // Solver address.
+	solverAddressMutex sync.RWMutex       // Mutex for solver address.
 
 	// Protected fields with their own mutexes.
 	clientMutex sync.RWMutex      // Mutex for client.

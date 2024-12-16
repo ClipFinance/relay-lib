@@ -153,7 +153,7 @@ func (h *EventHandler) processBlockRange(fromBlock, toBlock uint64) error {
 
 	// Process all logs.
 	for _, log := range relayResult.logs {
-		if err := h.processEvent("relay", log); err != nil {
+		if err := h.processEvent(utils.GetEventType(log), log); err != nil {
 			h.logger.WithFields(logrus.Fields{
 				"chain":     h.chainConfig.Name,
 				"eventType": "relay",
@@ -164,7 +164,7 @@ func (h *EventHandler) processBlockRange(fromBlock, toBlock uint64) error {
 	}
 
 	for _, log := range transferResult.logs {
-		if err := h.processEvent("transfer", log); err != nil {
+		if err := h.processEvent("Transfer", log); err != nil {
 			h.logger.WithFields(logrus.Fields{
 				"chain":     h.chainConfig.Name,
 				"eventType": "transfer",

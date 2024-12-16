@@ -51,3 +51,26 @@ type TransactionIntent struct {
 	UserAddress      string
 	RecipientAddress string
 }
+
+// Parameters represents transaction parameters
+type Parameters struct {
+	FromChain   int    `json:"fromChain"`
+	ToChain     int    `json:"toChain"`
+	FromToken   string `json:"fromToken"`
+	ToToken     string `json:"toToken"`
+	Amount      string `json:"amount"`
+	UserAddress string `json:"userAddress"`
+	Receiver    string `json:"receiver"`
+}
+
+// Quote represents quote information
+type Quote struct {
+	QuoteID           string     `json:"quoteId"`
+	ToAmount          string     `json:"toAmount"`
+	ToAmountMin       string     `json:"toAmountMin"`
+	ExecutionDuration int        `json:"executionDuration"`
+	GasEstimate       int        `json:"gasEstimate"`
+	RequestedAt       string     `json:"requestedAt"`
+	Deadline          string     `json:"deadline"`
+	Parameters        Parameters `json:"parameters"`
+}

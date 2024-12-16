@@ -2,7 +2,13 @@ package types
 
 import (
 	"context"
+	"github.com/ClipFinance/relay-lib/common/types"
 	"math/big"
+)
+
+const (
+	// ZeroAddress represents the zero address.
+	ZeroAddress = "0x0000000000000000000000000000000000000000"
 )
 
 // ChainConfig holds the configuration for a specific chain implementation.
@@ -93,6 +99,17 @@ type EventHandler interface {
 	// Returns:
 	// - error: an error if the HTTP polling subscription initialization fails.
 	InitHTTPPolling(ctx context.Context, eventChan chan ChainEvent) error
+
+	// ValidateTransaction validates a transaction based on the quote and the event.
+	//
+	// Parameters:
+	// - ctx: the context for managing the request.
+	// - quote: the quote containing transaction details.
+	// - event: the event containing chain event details.
+	//
+	// Returns:
+	// - error: an error if the transaction validation fails.
+	ValidateTransaction(ctx context.Context, quote *types.Quote, event types.ChainEvent) error
 
 	// ShutdownListeners stops all active subscriptions and event handlers.
 	ShutdownListeners()
