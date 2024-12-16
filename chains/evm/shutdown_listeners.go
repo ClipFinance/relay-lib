@@ -10,5 +10,10 @@ func (e *evm) ShutdownListeners() {
 		e.eventHandler = nil
 	}
 
+	e.clientMutex.Lock()
 	e.client.Close()
+	e.client = nil
+	e.clientMutex.Unlock()
+
+	e.monitor.Stop()
 }
