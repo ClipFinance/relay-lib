@@ -37,7 +37,7 @@ type Intent struct {
 	SubStatus        *string
 	RequestedAt      time.Time
 	FromTxMinedAt    time.Time
-	ToTxSentAt       *time.Time
+	ToTxSetAt        *time.Time
 	ToTxMinedAt      *time.Time
 	Refund           *bool
 	RefundTx         *string

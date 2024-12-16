@@ -67,7 +67,7 @@ func (r *DBConfig) InsertIntent(ctx context.Context, intent *types.Intent) error
 		intent.SubStatus,
 		intent.RequestedAt,
 		intent.FromTxMinedAt,
-		intent.ToTxSentAt,
+		intent.ToTxSetAt,
 		intent.ToTxMinedAt,
 		intent.Refund,
 		intent.RefundTx,
