@@ -197,14 +197,5 @@ func (h *EventHandler) processEvent(eventType string, log ethtypes.Log) error {
 
 	h.eventChan <- chainEvent
 
-	h.logger.WithFields(logrus.Fields{
-		"chain":       h.chainConfig.Name,
-		"eventType":   eventType,
-		"blockNumber": log.BlockNumber,
-		"blockHash":   log.BlockHash.Hex(),
-		"txHash":      log.TxHash.Hex(),
-		"quoteId":     quoteId,
-	}).Info("Successfully received event")
-
 	return nil
 }
