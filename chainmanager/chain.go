@@ -92,6 +92,16 @@ func (c *Chain) InitHTTPPolling(ctx context.Context, eventChan chan commontypes.
 	return c.handler.InitHTTPPolling(ctx, eventChan)
 }
 
+// ShutdownListeners stops all active subscriptions and event handlers.
+func (c *Chain) ShutdownListeners() {
+	c.handlerMutex.RLock()
+	defer c.handlerMutex.RUnlock()
+
+	if c.handler != nil {
+		c.handler.ShutdownListeners()
+	}
+}
+
 // EstimateGas estimates transaction gas with thread-safe access.
 // It locks the estimator mutex for reading to ensure safe concurrent access to the estimator.
 // If the estimator is not implemented, it returns an error.

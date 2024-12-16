@@ -93,6 +93,9 @@ type EventHandler interface {
 	// Returns:
 	// - error: an error if the HTTP polling subscription initialization fails.
 	InitHTTPPolling(ctx context.Context, eventChan chan ChainEvent) error
+
+	// ShutdownListeners stops all active subscriptions and event handlers.
+	ShutdownListeners()
 }
 
 // Chain combines all chain-specific functionality.
