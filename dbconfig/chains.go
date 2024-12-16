@@ -142,6 +142,8 @@ func (r *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Ch
 		return nil, ErrDatabaseConnect
 	}
 
+	chain.Name = strings.ToLower(chain.Name)
+
 	if receiverAddress.Valid {
 		chain.ReceiverAddress = receiverAddress.String
 	}
