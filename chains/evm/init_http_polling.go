@@ -36,7 +36,7 @@ func (e *evm) InitHTTPPolling(ctx context.Context, eventChan chan types.ChainEve
 		e.config,
 		e.logger,
 		client,
-		e.signer.Address().Hex(),
+		e.config.SolverAddress,
 		eventChan,
 	)
 	if err != nil {

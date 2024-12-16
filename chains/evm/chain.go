@@ -97,7 +97,7 @@ func NewEvmChain(config *types.ChainConfig, logger *logrus.Logger) (types.Chain,
 	builder.WithTransactionWatcher(chain)
 
 	// Add event handler only if both relay receiver and solver address are present.
-	if config.RelayReceiver != "" && config.PrivateKey != "" {
+	if config.RelayReceiver != "" && config.SolverAddress != "" {
 		builder.WithEventHandler(chain)
 	}
 

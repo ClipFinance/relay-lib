@@ -36,7 +36,7 @@ func (e *evm) InitWSSubscription(ctx context.Context, eventChan chan types.Chain
 		e.config,
 		e.logger,
 		client,
-		e.solverAddress.Hex(),
+		e.config.SolverAddress,
 		eventChan,
 	)
 	if err != nil {

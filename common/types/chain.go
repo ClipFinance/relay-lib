@@ -24,6 +24,7 @@ type ChainConfig struct {
 	TxType        uint64
 	WaitNBlocks   uint64
 	PrivateKey    string
+	SolverAddress string
 	RelayReceiver string
 }
 
