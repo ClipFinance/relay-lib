@@ -7,6 +7,14 @@ import (
 )
 
 // GetAgentByUID returns an agent by its UID from the database or an error if not found.
+//
+// Parameters:
+// - ctx: the context for managing the request.
+// - uid: the unique identifier for the agent.
+//
+// Returns:
+// - *models.Agent: a pointer to the Agent model.
+// - error: an error if the database operation fails or the agent is not found.
 func (r *DBConfig) GetAgentByUID(ctx context.Context, uid string) (*models.Agent, error) {
 	if uid == "" {
 		return nil, ErrInvalidAgentID

@@ -7,6 +7,15 @@ import (
 )
 
 // GetRPCsByChainID returns all RPCs for a given chain ID from the database, optionally filtering by active status.
+//
+// Parameters:
+// - ctx: the context for managing the request.
+// - chainID: the unique identifier for the chain.
+// - activeOnly: a boolean flag to filter only active RPCs.
+//
+// Returns:
+// - []models.RPC: a slice of RPC models.
+// - error: an error if the database operation fails.
 func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeOnly bool) ([]models.RPC, error) {
 	if chainID == 0 {
 		return nil, ErrInvalidChainID
@@ -19,18 +28,18 @@ func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeO
 	defer db.Close()
 
 	query := `
-      SELECT 
-          id,
-          chain_id,
-          url,
-          provider,
-          agent_id,
-          active,
-          created_at,
-          updated_at
-      FROM rpcs
-      WHERE chain_id = $1
-  `
+  		SELECT 
+  			id,
+			chain_id,
+			url,
+			provider,
+			agent_id,
+			active,
+			created_at,
+			updated_at
+		FROM rpcs
+		WHERE chain_id = $1
+   `
 
 	args := []interface{}{chainID}
 	argCount := 1
@@ -87,6 +96,15 @@ func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeO
 }
 
 // GetAgentRPCs returns all RPCs for a given agent ID from the database, optionally filtering by active status.
+//
+// Parameters:
+// - ctx: the context for managing the request.
+// - agentID: the unique identifier for the agent.
+// - activeOnly: a boolean flag to filter only active RPCs.
+//
+// Returns:
+// - []models.RPC: a slice of RPC models.
+// - error: an error if the database operation fails.
 func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly bool) ([]models.RPC, error) {
 	if agentID == 0 {
 		return nil, ErrInvalidAgentID

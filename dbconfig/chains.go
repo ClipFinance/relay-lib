@@ -7,6 +7,14 @@ import (
 )
 
 // GetChains returns all chains from the database, optionally filtering by active status.
+//
+// Parameters:
+// - ctx: the context for managing the request.
+// - activeOnly: a boolean flag to filter only active chains.
+//
+// Returns:
+// - []models.Chain: a slice of Chain models.
+// - error: an error if the database operation fails.
 func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Chain, error) {
 	db, err := sql.Open("postgres", r.dbConnStr)
 	if err != nil {
@@ -15,17 +23,17 @@ func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Cha
 	defer db.Close()
 
 	query := `
-      SELECT 
-          id,
-          chain_id,
-          name,
-          chain_type,
-          receiver_address,
-          active,
-          created_at,
-          updated_at
-      FROM chains
-  `
+		SELECT 
+			id,
+			chain_id,
+			name,
+			chain_type,
+			receiver_address,
+			active,
+			created_at,
+			updated_at
+		FROM chains
+   `
 
 	var args []interface{}
 	if activeOnly {
@@ -78,6 +86,15 @@ func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Cha
 	return chains, nil
 }
 
+// GetChainByID retrieves a chain from the database by its chain ID.
+//
+// Parameters:
+// - ctx: the context for managing the request.
+// - chainID: the unique identifier for the chain.
+//
+// Returns:
+// - *models.Chain: a pointer to the Chain model.
+// - error: an error if the database operation fails or the chain is not found.
 func (r *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Chain, error) {
 	if chainID == 0 {
 		return nil, ErrInvalidChainID
