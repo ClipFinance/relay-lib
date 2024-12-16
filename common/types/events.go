@@ -4,6 +4,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 	"sync"
+	"time"
 )
 
 // ChainEvent represents an event on a blockchain.
@@ -15,13 +16,30 @@ import (
 // - TxHash: the transaction hash associated with the event.
 // - LogIndex: the index of the log within the block.
 // - Data: the event data.
+// - FromTokenAddr: the address of the token that emitted the event.
+// - FromAddress: the address that emitted the event.
+// - ToAddress: the address that received the event.
+// - TransactionHash: the hash of the transaction that emitted the event.
+// - QuoteID: the unique identifier for the quote associated with the event.
+// - FromTxMinedAt: the time when the transaction was mined.
+// - FromNonce: the nonce of the transaction that emitted the event.
+// - TransactionAmount: the amount of the transaction that emitted the event.
 type ChainEvent struct {
-	ChainID     uint64
-	EventType   string
-	BlockNumber uint64
-	TxHash      string
-	LogIndex    uint
-	Data        []byte
+	ChainID           uint64
+	EventType         string
+	BlockNumber       uint64
+	BlockHash         string
+	TxHash            string
+	LogIndex          uint
+	Data              []byte
+	FromTokenAddr     string
+	FromAddress       string
+	ToAddress         string
+	TransactionHash   string
+	QuoteID           string
+	FromTxMinedAt     time.Time
+	FromNonce         uint64
+	TransactionAmount string
 }
 
 // Subscription wraps event subscription data.
