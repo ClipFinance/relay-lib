@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/ClipFinance/relay-lib/dbconfig/models"
+	"strings"
 )
 
 // GetChains returns all chains from the database, optionally filtering by active status.
@@ -73,7 +74,7 @@ func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Cha
 			chain.ReceiverAddress = receiverAddress.String
 		}
 		if chainType.Valid {
-			chain.Type = chainType.String
+			chain.Type = strings.ToUpper(chainType.String)
 		}
 
 		chains = append(chains, chain)
@@ -111,17 +112,17 @@ func (r *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Ch
 	var chainType sql.NullString
 
 	err = db.QueryRowContext(ctx, `
-       SELECT 
-           id,
-           chain_id,
-           name,
-           chain_type,
-           receiver_address,
-           active,
-           created_at,
-           updated_at
-       FROM chains
-       WHERE chain_id = $1
+   		SELECT 
+   			id,
+			chain_id,
+			name,
+			chain_type,
+			receiver_address,
+			active,
+			created_at,
+			updated_at
+		FROM chains
+		WHERE chain_id = $1
     `, chainID).Scan(
 		&chain.ID,
 		&chain.ChainID,
@@ -145,7 +146,7 @@ func (r *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Ch
 		chain.ReceiverAddress = receiverAddress.String
 	}
 	if chainType.Valid {
-		chain.Type = chainType.String
+		chain.Type = strings.ToUpper(chainType.String)
 	}
 
 	return &chain, nil
