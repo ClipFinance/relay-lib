@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"github.com/ClipFinance/relay-lib/common/types"
 	"math/big"
 )
 
@@ -24,7 +23,7 @@ const (
 // - RelayReceiver: the address of the relay receiver.
 type ChainConfig struct {
 	Name          string
-	ChainType     ChainType
+	ChainType     string
 	ChainID       uint64
 	RpcUrl        string
 	TxType        uint64
@@ -109,7 +108,7 @@ type EventHandler interface {
 	//
 	// Returns:
 	// - error: an error if the transaction validation fails.
-	ValidateTransaction(ctx context.Context, quote *types.Quote, event types.ChainEvent) error
+	ValidateTransaction(ctx context.Context, quote *Quote, event ChainEvent) error
 
 	// ShutdownListeners stops all active subscriptions and event handlers.
 	ShutdownListeners()

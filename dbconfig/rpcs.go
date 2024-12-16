@@ -3,19 +3,18 @@ package dbconfig
 import (
 	"context"
 	"database/sql"
-	"github.com/ClipFinance/relay-lib/common/errors"
 	"github.com/ClipFinance/relay-lib/dbconfig/models"
 )
 
 // GetRPCsByChainID returns all RPCs for a given chain ID from the database, optionally filtering by active status.
 func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeOnly bool) ([]models.RPC, error) {
 	if chainID == 0 {
-		return nil, errors.ErrInvalidChainID
+		return nil, ErrInvalidChainID
 	}
 
 	db, err := sql.Open("postgres", r.dbConnStr)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer db.Close()
 
@@ -46,7 +45,7 @@ func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeO
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer rows.Close()
 
@@ -67,7 +66,7 @@ func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeO
 			&rpc.UpdatedAt,
 		)
 		if err != nil {
-			return nil, errors.ErrDatabaseConnect
+			return nil, ErrDatabaseConnect
 		}
 
 		if provider.Valid {
@@ -81,7 +80,7 @@ func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeO
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 
 	return rpcs, nil
@@ -90,12 +89,12 @@ func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeO
 // GetAgentRPCs returns all RPCs for a given agent ID from the database, optionally filtering by active status.
 func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly bool) ([]models.RPC, error) {
 	if agentID == 0 {
-		return nil, errors.ErrInvalidAgentID
+		return nil, ErrInvalidAgentID
 	}
 
 	db, err := sql.Open("postgres", r.dbConnStr)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer db.Close()
 
@@ -127,7 +126,7 @@ func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly b
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer rows.Close()
 
@@ -147,7 +146,7 @@ func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly b
 			&rpc.UpdatedAt,
 		)
 		if err != nil {
-			return nil, errors.ErrDatabaseConnect
+			return nil, ErrDatabaseConnect
 		}
 
 		if provider.Valid {
@@ -158,7 +157,7 @@ func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly b
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 
 	return rpcs, nil

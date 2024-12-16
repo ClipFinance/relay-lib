@@ -1,4 +1,4 @@
-package types
+package chains
 
 // ChainType represents supported blockchain types
 type ChainType string

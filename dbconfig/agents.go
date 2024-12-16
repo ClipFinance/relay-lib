@@ -3,19 +3,18 @@ package dbconfig
 import (
 	"context"
 	"database/sql"
-	"github.com/ClipFinance/relay-lib/common/errors"
 	"github.com/ClipFinance/relay-lib/dbconfig/models"
 )
 
 // GetAgentByUID returns an agent by its UID from the database or an error if not found.
 func (r *DBConfig) GetAgentByUID(ctx context.Context, uid string) (*models.Agent, error) {
 	if uid == "" {
-		return nil, errors.ErrInvalidAgentID
+		return nil, ErrInvalidAgentID
 	}
 
 	db, err := sql.Open("postgres", r.dbConnStr)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer db.Close()
 
@@ -40,11 +39,11 @@ func (r *DBConfig) GetAgentByUID(ctx context.Context, uid string) (*models.Agent
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, errors.ErrAgentNotFound
+		return nil, ErrAgentNotFound
 	}
 
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 
 	if url.Valid {

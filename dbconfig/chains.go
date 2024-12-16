@@ -3,17 +3,14 @@ package dbconfig
 import (
 	"context"
 	"database/sql"
-	"github.com/ClipFinance/relay-lib/common/errors"
-	"github.com/ClipFinance/relay-lib/common/types"
 	"github.com/ClipFinance/relay-lib/dbconfig/models"
-	"strings"
 )
 
 // GetChains returns all chains from the database, optionally filtering by active status.
 func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Chain, error) {
 	db, err := sql.Open("postgres", r.dbConnStr)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer db.Close()
 
@@ -40,7 +37,7 @@ func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Cha
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer rows.Close()
 
@@ -61,21 +58,21 @@ func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Cha
 			&chain.UpdatedAt,
 		)
 		if err != nil {
-			return nil, errors.ErrDatabaseConnect
+			return nil, ErrDatabaseConnect
 		}
 
 		if receiverAddress.Valid {
 			chain.ReceiverAddress = receiverAddress.String
 		}
 		if chainType.Valid {
-			chain.Type = types.ChainType(strings.ToUpper(chainType.String))
+			chain.Type = chainType.String
 		}
 
 		chains = append(chains, chain)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 
 	return chains, nil
@@ -83,12 +80,12 @@ func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Cha
 
 func (r *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Chain, error) {
 	if chainID == 0 {
-		return nil, errors.ErrInvalidChainID
+		return nil, ErrInvalidChainID
 	}
 
 	db, err := sql.Open("postgres", r.dbConnStr)
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 	defer db.Close()
 
@@ -120,18 +117,18 @@ func (r *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Ch
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, errors.ErrChainNotFound
+		return nil, ErrChainNotFound
 	}
 
 	if err != nil {
-		return nil, errors.ErrDatabaseConnect
+		return nil, ErrDatabaseConnect
 	}
 
 	if receiverAddress.Valid {
 		chain.ReceiverAddress = receiverAddress.String
 	}
 	if chainType.Valid {
-		chain.Type = types.ChainType(strings.ToUpper(chainType.String))
+		chain.Type = chainType.String
 	}
 
 	return &chain, nil

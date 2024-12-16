@@ -2,7 +2,6 @@ package chainmanager
 
 import (
 	"context"
-	"github.com/ClipFinance/relay-lib/common/errors"
 	commontypes "github.com/ClipFinance/relay-lib/common/types"
 	"math/big"
 	"sync"
@@ -67,7 +66,7 @@ func (c *Chain) InitWSSubscription(ctx context.Context, eventChan chan commontyp
 	defer c.handlerMutex.RUnlock()
 
 	if c.handler == nil {
-		return errors.ErrNotImplemented
+		return ErrNotImplemented
 	}
 	return c.handler.InitWSSubscription(ctx, eventChan)
 }
@@ -87,7 +86,7 @@ func (c *Chain) InitHTTPPolling(ctx context.Context, eventChan chan commontypes.
 	defer c.handlerMutex.RUnlock()
 
 	if c.handler == nil {
-		return errors.ErrNotImplemented
+		return ErrNotImplemented
 	}
 	return c.handler.InitHTTPPolling(ctx, eventChan)
 }
@@ -106,7 +105,7 @@ func (c *Chain) ValidateTransaction(ctx context.Context, quote *commontypes.Quot
 	defer c.handlerMutex.RUnlock()
 
 	if c.handler == nil {
-		return errors.ErrNotImplemented
+		return ErrNotImplemented
 	}
 
 	return c.handler.ValidateTransaction(ctx, quote, event)
@@ -140,7 +139,7 @@ func (c *Chain) EstimateGas(ctx context.Context, to string, value *big.Int, data
 	defer c.estimatorMutex.RUnlock()
 
 	if c.estimator == nil {
-		return 0, errors.ErrNotImplemented
+		return 0, ErrNotImplemented
 	}
 	return c.estimator.EstimateGas(ctx, to, value, data)
 }
@@ -161,7 +160,7 @@ func (c *Chain) SendAsset(ctx context.Context, intent *commontypes.TransactionIn
 	defer c.senderMutex.RUnlock()
 
 	if c.sender == nil {
-		return nil, errors.ErrNotImplemented
+		return nil, ErrNotImplemented
 	}
 	return c.sender.SendAsset(ctx, intent)
 }
@@ -182,7 +181,7 @@ func (c *Chain) WaitTransactionConfirmation(ctx context.Context, tx *commontypes
 	defer c.watcherMutex.RUnlock()
 
 	if c.watcher == nil {
-		return false, errors.ErrNotImplemented
+		return false, ErrNotImplemented
 	}
 	return c.watcher.WaitTransactionConfirmation(ctx, tx)
 }
