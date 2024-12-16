@@ -155,7 +155,7 @@ func (c *Chain) EstimateGas(ctx context.Context, to string, value *big.Int, data
 // Returns:
 // - *commontypes.Transaction: the transaction instance.
 // - error: an error if the sender is not implemented or if any issue occurs during sending.
-func (c *Chain) SendAsset(ctx context.Context, intent *commontypes.TransactionIntent) (*commontypes.Transaction, error) {
+func (c *Chain) SendAsset(ctx context.Context, intent *commontypes.Intent) (*commontypes.Transaction, error) {
 	c.senderMutex.RLock()
 	defer c.senderMutex.RUnlock()
 

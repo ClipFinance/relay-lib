@@ -21,7 +21,7 @@ import (
 // Returns:
 // - *types.Transaction: the transaction details.
 // - error: an error if the client is not initialized or if the transaction fails.
-func (e *evm) SendAsset(ctx context.Context, intent *types.TransactionIntent) (*types.Transaction, error) {
+func (e *evm) SendAsset(ctx context.Context, intent *types.Intent) (*types.Transaction, error) {
 	e.clientMutex.RLock()
 	client := e.client
 	e.clientMutex.RUnlock()
@@ -68,7 +68,7 @@ func (e *evm) SendAsset(ctx context.Context, intent *types.TransactionIntent) (*
 // Returns:
 // - *ethtypes.Transaction: the transaction details.
 // - error: an error if the transaction preparation or sending fails.
-func (e *evm) sendNativeAsset(ctx context.Context, intent *types.TransactionIntent, nonce uint64) (*ethtypes.Transaction, error) {
+func (e *evm) sendNativeAsset(ctx context.Context, intent *types.Intent, nonce uint64) (*ethtypes.Transaction, error) {
 	tx, err := e.prepareTransaction(ctx, nonce, intent.RecipientAddress, intent.ToAmount, nil)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (e *evm) sendNativeAsset(ctx context.Context, intent *types.TransactionInte
 // Returns:
 // - *ethtypes.Transaction: the transaction details.
 // - error: an error if the token ABI parsing, data packing, transaction preparation, or sending fails.
-func (e *evm) sendToken(ctx context.Context, intent *types.TransactionIntent, nonce uint64) (*ethtypes.Transaction, error) {
+func (e *evm) sendToken(ctx context.Context, intent *types.Intent, nonce uint64) (*ethtypes.Transaction, error) {
 	tokenAbi, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse token ABI")

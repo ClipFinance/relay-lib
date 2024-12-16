@@ -60,7 +60,7 @@ type TransactionSender interface {
 	// Returns:
 	// - *Transaction: the transaction details.
 	// - error: an error if the transaction sending fails.
-	SendAsset(ctx context.Context, intent *TransactionIntent) (*Transaction, error)
+	SendAsset(ctx context.Context, intent *Intent) (*Transaction, error)
 }
 
 // TransactionWatcher provides transaction confirmation functionality.

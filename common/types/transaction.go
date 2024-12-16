@@ -1,9 +1,5 @@
 package types
 
-import (
-	"math/big"
-)
-
 // Transaction represents a blockchain transaction.
 //
 // Fields:
@@ -26,30 +22,6 @@ type Transaction struct {
 	Nonce      uint64
 	ChainID    uint64
 	QuoteID    string
-}
-
-// TransactionIntent represents the intent to perform a blockchain transaction.
-//
-// Fields:
-// - QuoteID: the identifier for the quote associated with the transaction intent.
-// - FromChain: the unique identifier for the chain from which the transaction is sent.
-// - FromToken: the token sent from the sender's address.
-// - FromAmount: the amount sent from the sender's address.
-// - ToChain: the unique identifier for the chain to which the transaction is sent.
-// - ToToken: the token received at the recipient's address.
-// - ToAmount: the amount received at the recipient's address.
-// - UserAddress: the address of the user initiating the transaction.
-// - RecipientAddress: the address of the recipient of the transaction.
-type TransactionIntent struct {
-	QuoteID          string
-	FromChain        uint64
-	FromToken        string
-	FromAmount       *big.Int
-	ToChain          uint64
-	ToToken          string
-	ToAmount         *big.Int
-	UserAddress      string
-	RecipientAddress string
 }
 
 // Parameters represents transaction parameters
