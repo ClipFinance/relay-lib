@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	"github.com/ClipFinance/relay-lib/common/utils"
+	"github.com/ClipFinance/relay-lib/chains/evm/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
