@@ -3,7 +3,7 @@ package chains
 import (
 	"github.com/ClipFinance/relay-lib/chains/evm"
 	"github.com/ClipFinance/relay-lib/chains/solana"
-	commontypes "github.com/ClipFinance/relay-lib/common/types"
+	relaytypes "github.com/ClipFinance/relay-lib/common/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sync"
@@ -16,9 +16,9 @@ import (
 // - logger: the logger for logging purposes.
 //
 // Returns:
-// - commontypes.Chain: the constructed chain instance.
+// - relaytypes.Chain: the constructed chain instance.
 // - error: an error if the chain construction fails.
-type ChainConstructor func(config *commontypes.ChainConfig, logger *logrus.Logger) (commontypes.Chain, error)
+type ChainConstructor func(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error)
 
 // ChainFactory defines the interface for chain creation.
 type ChainFactory interface {
@@ -36,9 +36,9 @@ type ChainFactory interface {
 	// - logger: the logger for logging purposes.
 	//
 	// Returns:
-	// - commontypes.Chain: the created chain instance.
+	// - relaytypes.Chain: the created chain instance.
 	// - error: an error if the chain creation fails.
-	CreateChain(config *commontypes.ChainConfig, logger *logrus.Logger) (commontypes.Chain, error)
+	CreateChain(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error)
 }
 
 type chainFactory struct {
@@ -82,9 +82,9 @@ func (f *chainFactory) RegisterConstructor(chainType string, constructor ChainCo
 // - logger: the logger for logging purposes.
 //
 // Returns:
-// - commontypes.Chain: the created chain instance.
+// - relaytypes.Chain: the created chain instance.
 // - error: an error if the chain creation fails.
-func (f *chainFactory) CreateChain(config *commontypes.ChainConfig, logger *logrus.Logger) (commontypes.Chain, error) {
+func (f *chainFactory) CreateChain(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
 	f.constructorsMutex.RLock()
 	constructor, exists := f.constructors[config.ChainType]
 	f.constructorsMutex.RUnlock()
@@ -100,12 +100,12 @@ func (f *chainFactory) CreateChain(config *commontypes.ChainConfig, logger *logr
 // registerConstructors registers the blockchain constructors for the chain factory instance.
 func (f *chainFactory) registerConstructors() {
 	// Register EVM chain constructor with the factory.
-	f.RegisterConstructor(EVM.String(), func(config *commontypes.ChainConfig, logger *logrus.Logger) (commontypes.Chain, error) {
+	f.RegisterConstructor(EVM.String(), func(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
 		return evm.NewEvmChain(config, logger)
 	})
 
 	// Register Solana chain constructor with the factory.
-	f.RegisterConstructor(SOLANA.String(), func(config *commontypes.ChainConfig, logger *logrus.Logger) (commontypes.Chain, error) {
+	f.RegisterConstructor(SOLANA.String(), func(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
 		return solana.NewSolanaChain(config, logger)
 	})
 }

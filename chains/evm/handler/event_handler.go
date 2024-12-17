@@ -2,7 +2,7 @@ package handler
 
 import (
 	"context"
-	commontypes "github.com/ClipFinance/relay-lib/common/types"
+	relaytypes "github.com/ClipFinance/relay-lib/common/types"
 	"github.com/ClipFinance/relay-lib/common/utils"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -24,18 +24,18 @@ const (
 // EventHandler handles chain events with thread-safe access.
 // It manages subscriptions, polling, and client updates.
 type EventHandler struct {
-	ctx                  context.Context             // Context for managing lifecycle.
-	cancel               context.CancelFunc          // Cancel function for context.
-	chainConfig          *commontypes.ChainConfig    // Chain configuration.
-	logger               *logrus.Logger              // Logger for logging events.
-	client               *ethclient.Client           // Ethereum client.
-	solverAddress        string                      // Solver address.
-	eventChan            chan commontypes.ChainEvent // Channel for chain events.
-	relaySubscription    *commontypes.Subscription   // Subscription for relay events.
-	transferSubscription *commontypes.Subscription   // Subscription for transfer events.
-	lastProcessedBlock   uint64                      // Last processed block number.
-	lastBlockMutex       sync.RWMutex                // Mutex for last processed block.
-	pollingTicker        *time.Ticker                // Ticker for polling.
+	ctx                  context.Context            // Context for managing lifecycle.
+	cancel               context.CancelFunc         // Cancel function for context.
+	chainConfig          *relaytypes.ChainConfig    // Chain configuration.
+	logger               *logrus.Logger             // Logger for logging events.
+	client               *ethclient.Client          // Ethereum client.
+	solverAddress        string                     // Solver address.
+	eventChan            chan relaytypes.ChainEvent // Channel for chain events.
+	relaySubscription    *relaytypes.Subscription   // Subscription for relay events.
+	transferSubscription *relaytypes.Subscription   // Subscription for transfer events.
+	lastProcessedBlock   uint64                     // Last processed block number.
+	lastBlockMutex       sync.RWMutex               // Mutex for last processed block.
+	pollingTicker        *time.Ticker               // Ticker for polling.
 }
 
 // NewEventHandler creates a new event handler instance.
@@ -53,11 +53,11 @@ type EventHandler struct {
 // - error: an error if any issue occurs during creation.
 func NewEventHandler(
 	ctx context.Context,
-	config *commontypes.ChainConfig,
+	config *relaytypes.ChainConfig,
 	logger *logrus.Logger,
 	client *ethclient.Client,
 	solverAddr string,
-	eventChan chan commontypes.ChainEvent,
+	eventChan chan relaytypes.ChainEvent,
 ) (*EventHandler, error) {
 	handlerCtx, cancel := context.WithCancel(ctx)
 
@@ -69,8 +69,8 @@ func NewEventHandler(
 		client:               client,
 		solverAddress:        solverAddr,
 		eventChan:            eventChan,
-		relaySubscription:    &commontypes.Subscription{},
-		transferSubscription: &commontypes.Subscription{},
+		relaySubscription:    &relaytypes.Subscription{},
+		transferSubscription: &relaytypes.Subscription{},
 	}
 
 	return handler, nil
@@ -85,11 +85,11 @@ func (h *EventHandler) UpdateClient(client *ethclient.Client) {
 
 	if h.relaySubscription != nil {
 		h.relaySubscription.Close()
-		h.relaySubscription = &commontypes.Subscription{}
+		h.relaySubscription = &relaytypes.Subscription{}
 	}
 	if h.transferSubscription != nil {
 		h.transferSubscription.Close()
-		h.transferSubscription = &commontypes.Subscription{}
+		h.transferSubscription = &relaytypes.Subscription{}
 	}
 
 	handlerCtx, cancel := context.WithCancel(context.Background())
@@ -181,7 +181,7 @@ func (h *EventHandler) processEvent(eventType string, log ethtypes.Log) error {
 		return errors.Wrap(err, "failed to get block time")
 	}
 
-	chainEvent := commontypes.ChainEvent{
+	chainEvent := relaytypes.ChainEvent{
 		ChainID:           h.chainConfig.ChainID,
 		BlockNumber:       log.BlockNumber,
 		BlockHash:         log.BlockHash.String(),
