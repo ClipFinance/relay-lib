@@ -96,27 +96,27 @@ func (h *EventHandler) handleEvents() {
 			return
 
 		case err := <-h.relaySubscription.Subscription.Err():
-			h.logger.WithError(err).Error("Relay subscription error")
+			h.logger.WithField("chain", h.chainConfig.Name).WithError(err).Error("Relay subscription error")
 			if err := h.reconnectSubscription("relay"); err != nil {
-				h.logger.WithError(err).Error("Failed to reconnect relay subscription")
+				h.logger.WithField("chain", h.chainConfig.Name).WithError(err).Error("Failed to reconnect relay subscription")
 			}
 
 		case err := <-h.transferSubscription.Subscription.Err():
-			h.logger.WithError(err).Error("Transfer subscription error")
+			h.logger.WithField("chain", h.chainConfig.Name).WithError(err).Error("Transfer subscription error")
 			if err := h.reconnectSubscription("transfer"); err != nil {
-				h.logger.WithError(err).Error("Failed to reconnect transfer subscription")
+				h.logger.WithField("chain", h.chainConfig.Name).WithError(err).Error("Failed to reconnect transfer subscription")
 			}
 
 		case event := <-h.relaySubscription.EventChan:
 			err := h.processEvent(utils.GetEventType(event), event)
 			if err != nil {
-				h.logger.WithError(err).Error("Failed to process relay event")
+				h.logger.WithField("chain", h.chainConfig.Name).WithError(err).Error("Failed to process relay event")
 			}
 
 		case event := <-h.transferSubscription.EventChan:
 			err := h.processEvent(utils.GetEventType(event), event)
 			if err != nil {
-				h.logger.WithError(err).Error("Failed to process transfer event")
+				h.logger.WithField("chain", h.chainConfig.Name).WithError(err).Error("Failed to process transfer event")
 			}
 		}
 	}
