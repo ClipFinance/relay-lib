@@ -7,11 +7,39 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/event"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"math/big"
+	"sync"
 	"time"
 )
+
+// Subscription wraps event subscription data.
+//
+// Fields:
+// - Subscription: the event subscription.
+// - EventChan: the channel to receive Ethereum logs.
+// - sync.Mutex: the mutex to protect access to the subscription data.
+type Subscription struct {
+	Subscription event.Subscription
+	EventChan    chan ethtypes.Log
+	sync.Mutex
+}
+
+// Close closes the subscription and the event channel.
+func (s *Subscription) Close() {
+	s.Lock()
+	defer s.Unlock()
+
+	if s.Subscription != nil {
+		s.Subscription.Unsubscribe()
+	}
+
+	if s.EventChan != nil {
+		close(s.EventChan)
+	}
+}
 
 // StartWSSubscription starts the WebSocket subscription for relay and transfer events.
 // It sets up the necessary subscriptions and starts handling events in a separate goroutine.

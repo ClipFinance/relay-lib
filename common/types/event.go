@@ -1,9 +1,6 @@
 package types
 
 import (
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/event"
-	"sync"
 	"time"
 )
 
@@ -40,30 +37,4 @@ type ChainEvent struct {
 	FromTxMinedAt     time.Time
 	FromNonce         uint64
 	TransactionAmount string
-}
-
-// Subscription wraps event subscription data.
-//
-// Fields:
-// - Subscription: the event subscription.
-// - EventChan: the channel to receive Ethereum logs.
-// - sync.Mutex: the mutex to protect access to the subscription data.
-type Subscription struct {
-	Subscription event.Subscription
-	EventChan    chan ethtypes.Log
-	sync.Mutex
-}
-
-// Close closes the subscription and the event channel.
-func (s *Subscription) Close() {
-	s.Lock()
-	defer s.Unlock()
-
-	if s.Subscription != nil {
-		s.Subscription.Unsubscribe()
-	}
-
-	if s.EventChan != nil {
-		close(s.EventChan)
-	}
 }

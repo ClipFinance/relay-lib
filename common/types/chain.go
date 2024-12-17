@@ -5,11 +5,6 @@ import (
 	"math/big"
 )
 
-const (
-	// ZeroAddress represents the zero address.
-	ZeroAddress = "0x0000000000000000000000000000000000000000"
-)
-
 // ChainConfig holds the configuration for a specific chain implementation.
 //
 // Fields:

@@ -24,7 +24,16 @@ type Transaction struct {
 	QuoteID    string
 }
 
-// Parameters represents transaction parameters
+// Parameters represents transaction parameters.
+//
+// Fields:
+// - FromChain: the chain ID from which the transaction is sent.
+// - ToChain: the chain ID to which the transaction is sent.
+// - FromToken: the token address from which the transaction is sent.
+// - ToToken: the token address to which the transaction is sent.
+// - Amount: the amount of tokens to be transferred.
+// - UserAddress: the address of the user initiating the transaction.
+// - Receiver: the address of the receiver of the transaction.
 type Parameters struct {
 	FromChain   int    `json:"fromChain"`
 	ToChain     int    `json:"toChain"`
@@ -35,7 +44,17 @@ type Parameters struct {
 	Receiver    string `json:"receiver"`
 }
 
-// Quote represents quote information
+// Quote represents quote information.
+//
+// Fields:
+// - QuoteID: the unique identifier for the quote.
+// - ToAmount: the amount to be received in the quote.
+// - ToAmountMin: the minimum amount to be received in the quote.
+// - ExecutionDuration: the duration for the quote execution.
+// - GasEstimate: the estimated gas for the quote.
+// - RequestedAt: the timestamp when the quote was requested.
+// - Deadline: the deadline for the quote.
+// - Parameters: the transaction parameters associated with the quote.
 type Quote struct {
 	QuoteID           string     `json:"quoteId"`
 	ToAmount          string     `json:"toAmount"`

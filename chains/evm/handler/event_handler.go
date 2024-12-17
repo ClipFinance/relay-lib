@@ -31,8 +31,8 @@ type EventHandler struct {
 	client               *ethclient.Client          // Ethereum client.
 	solverAddress        string                     // Solver address.
 	eventChan            chan relaytypes.ChainEvent // Channel for chain events.
-	relaySubscription    *relaytypes.Subscription   // Subscription for relay events.
-	transferSubscription *relaytypes.Subscription   // Subscription for transfer events.
+	relaySubscription    *Subscription              // Subscription for relay events.
+	transferSubscription *Subscription              // Subscription for transfer events.
 	lastProcessedBlock   uint64                     // Last processed block number.
 	lastBlockMutex       sync.RWMutex               // Mutex for last processed block.
 	pollingTicker        *time.Ticker               // Ticker for polling.
@@ -69,8 +69,8 @@ func NewEventHandler(
 		client:               client,
 		solverAddress:        solverAddr,
 		eventChan:            eventChan,
-		relaySubscription:    &relaytypes.Subscription{},
-		transferSubscription: &relaytypes.Subscription{},
+		relaySubscription:    &Subscription{},
+		transferSubscription: &Subscription{},
 	}
 
 	return handler, nil
@@ -85,11 +85,11 @@ func (h *EventHandler) UpdateClient(client *ethclient.Client) {
 
 	if h.relaySubscription != nil {
 		h.relaySubscription.Close()
-		h.relaySubscription = &relaytypes.Subscription{}
+		h.relaySubscription = &Subscription{}
 	}
 	if h.transferSubscription != nil {
 		h.transferSubscription.Close()
-		h.transferSubscription = &relaytypes.Subscription{}
+		h.transferSubscription = &Subscription{}
 	}
 
 	handlerCtx, cancel := context.WithCancel(context.Background())

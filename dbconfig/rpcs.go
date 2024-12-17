@@ -153,7 +153,7 @@ func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly b
 		var rpc models.RPC
 		var provider sql.NullString
 
-		err := rows.Scan(
+		if err := rows.Scan(
 			&rpc.ID,
 			&rpc.ChainID,
 			&rpc.URL,
@@ -162,8 +162,7 @@ func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly b
 			&rpc.Active,
 			&rpc.CreatedAt,
 			&rpc.UpdatedAt,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, ErrDatabaseConnect
 		}
 
