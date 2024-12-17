@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/ClipFinance/relay-lib/dbconfig/models"
+	"github.com/sirupsen/logrus"
 )
 
 // GetRPCsByChainID returns all RPCs for a given chain ID from the database, optionally filtering by active status.
@@ -164,6 +165,15 @@ func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly b
 			&rpc.UpdatedAt,
 		); err != nil {
 			return nil, ErrDatabaseConnect
+		}
+
+		if rpc.URL == "" {
+			r.logger.WithFields(logrus.Fields{
+				"rpcID":   rpc.ID,
+				"chainID": rpc.ChainID,
+				"agentID": rpc.AgentID,
+			}).Error("RPC URL is empty")
+			continue
 		}
 
 		if provider.Valid {
