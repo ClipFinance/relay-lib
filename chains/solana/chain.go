@@ -75,9 +75,7 @@ func NewSolanaChain(config *types.ChainConfig, logger *logrus.Logger) (types.Cha
 
 	builder.WithTransactionWatcher(chain)
 
-	if config.RelayReceiver != "" && config.PrivateKey != "" {
-		builder.WithEventHandler(chain)
-	}
+	builder.WithEventHandler(chain)
 
 	return builder.Build(), nil
 }

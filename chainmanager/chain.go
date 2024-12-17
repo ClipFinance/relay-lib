@@ -116,7 +116,9 @@ func (c *Chain) ShutdownListeners() {
 	c.handlerMutex.RLock()
 	defer c.handlerMutex.RUnlock()
 
-	c.handler.ShutdownListeners()
+	if c.handler != nil {
+		c.handler.ShutdownListeners()
+	}
 }
 
 // EstimateGas estimates transaction gas with thread-safe access.
