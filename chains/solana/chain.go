@@ -49,6 +49,10 @@ func NewSolanaChain(config *types.ChainConfig, logger *logrus.Logger) (types.Cha
 		client: client,
 	}
 
+	if config.SolverAddress != "" {
+		chain.solverAddress = config.SolverAddress
+	}
+
 	if err := chain.initMonitor(ctx); err != nil {
 		return nil, errors.Wrap(err, "failed to init connection connection monitor")
 	}

@@ -210,6 +210,18 @@ func (c *Chain) GetTokenBalance(ctx context.Context, address string, tokenAddres
 	return provider.GetTokenBalance(ctx, address, tokenAddress)
 }
 
+func (c *Chain) SolverAddress() string {
+	c.providerMutex.RLock()
+	provider := c.provider
+	c.providerMutex.RUnlock()
+
+	if provider == nil {
+		return ""
+	}
+
+	return provider.SolverAddress()
+}
+
 // Helper methods with thread-safe access to dependencies
 
 // GetEstimator returns the gas estimator with thread-safe access.

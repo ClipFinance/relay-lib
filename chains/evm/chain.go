@@ -69,6 +69,10 @@ func NewEvmChain(config *types.ChainConfig, logger *logrus.Logger) (types.Chain,
 		client: client,
 	}
 
+	if config.SolverAddress != "" {
+		chain.solverAddress = common.HexToAddress(config.SolverAddress)
+	}
+
 	if err := chain.initMonitor(ctx); err != nil {
 		return nil, errors.Wrap(err, "failed to init connection monitor")
 	}

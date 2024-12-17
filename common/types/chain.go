@@ -123,6 +123,12 @@ type BalanceProvider interface {
 	// - *big.Int: the token balance
 	// - error: an error if the balance check fails
 	GetTokenBalance(ctx context.Context, address string, tokenAddress string) (*big.Int, error)
+
+	// SolverAddress returns the solver address for the chain.
+	//
+	// Returns:
+	// - string: the solver address for fetching balances.
+	SolverAddress() string
 }
 
 // Chain combines all chain-specific functionality.
