@@ -16,12 +16,14 @@ type Chain struct {
 	sender    relaytypes.TransactionSender  // Transaction sender implementation.
 	watcher   relaytypes.TransactionWatcher // Transaction watcher implementation.
 	handler   relaytypes.EventHandler       // Event handler implementation.
+	provider  relaytypes.BalanceProvider    // Balance provider implementation.
 
 	// Mutexes for thread-safe access to dependencies.
 	estimatorMutex sync.RWMutex // Mutex for gas estimator.
 	senderMutex    sync.RWMutex // Mutex for transaction sender.
 	watcherMutex   sync.RWMutex // Mutex for transaction watcher.
 	handlerMutex   sync.RWMutex // Mutex for event handler.
+	providerMutex  sync.RWMutex // Mutex for balance provider.
 }
 
 // NewChain creates a new Chain instance.
@@ -41,6 +43,7 @@ func NewChain(
 	sender relaytypes.TransactionSender,
 	watcher relaytypes.TransactionWatcher,
 	handler relaytypes.EventHandler,
+	provider relaytypes.BalanceProvider,
 ) *Chain {
 	return &Chain{
 		config:    config,
@@ -48,6 +51,7 @@ func NewChain(
 		sender:    sender,
 		watcher:   watcher,
 		handler:   handler,
+		provider:  provider,
 	}
 }
 
@@ -192,6 +196,18 @@ func (c *Chain) WaitTransactionConfirmation(ctx context.Context, tx *relaytypes.
 // - *relaytypes.ChainConfig: the chain configuration instance.
 func (c *Chain) GetConfig() *relaytypes.ChainConfig {
 	return c.config
+}
+
+func (c *Chain) GetTokenBalance(ctx context.Context, address string, tokenAddress string) (*big.Int, error) {
+	c.providerMutex.RLock()
+	provider := c.provider
+	c.providerMutex.RUnlock()
+
+	if provider == nil {
+		return nil, ErrNotImplemented
+	}
+
+	return provider.GetTokenBalance(ctx, address, tokenAddress)
 }
 
 // Helper methods with thread-safe access to dependencies

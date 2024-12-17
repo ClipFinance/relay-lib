@@ -70,7 +70,7 @@ func NewEvmChain(config *types.ChainConfig, logger *logrus.Logger) (types.Chain,
 	}
 
 	if err := chain.initMonitor(ctx); err != nil {
-		return nil, errors.Wrap(err, "failed to init connection connectionmonitor")
+		return nil, errors.Wrap(err, "failed to init connection monitor")
 	}
 
 	builder := chainmanager.NewChainBuilder(config)
@@ -96,8 +96,8 @@ func NewEvmChain(config *types.ChainConfig, logger *logrus.Logger) (types.Chain,
 	}
 
 	builder.WithTransactionWatcher(chain)
-
 	builder.WithEventHandler(chain)
+	builder.WithBalanceProvider(chain)
 
 	return builder.Build(), nil
 }

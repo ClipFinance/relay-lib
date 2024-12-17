@@ -13,6 +13,7 @@ type ChainBuilder struct {
 	sender    types.TransactionSender  // Transaction sender implementation.
 	watcher   types.TransactionWatcher // Transaction watcher implementation.
 	handler   types.EventHandler       // Event handler implementation.
+	provider  types.BalanceProvider    // Balance provider implementation.
 }
 
 // NewChainBuilder creates a new chain builder instance.
@@ -76,10 +77,22 @@ func (b *ChainBuilder) WithEventHandler(handler types.EventHandler) *ChainBuilde
 	return b
 }
 
+// WithBalanceProvider sets balance provider implementation.
+//
+// Parameters:
+// - provider: the balance provider implementation.
+//
+// Returns:
+// - *ChainBuilder: the updated ChainBuilder instance.
+func (b *ChainBuilder) WithBalanceProvider(provider types.BalanceProvider) *ChainBuilder {
+	b.provider = provider
+	return b
+}
+
 // Build creates a new chain instance with configured implementations.
 //
 // Returns:
 // - types.Chain: a new Chain instance with the configured implementations.
 func (b *ChainBuilder) Build() types.Chain {
-	return NewChain(b.config, b.estimator, b.sender, b.watcher, b.handler)
+	return NewChain(b.config, b.estimator, b.sender, b.watcher, b.handler, b.provider)
 }

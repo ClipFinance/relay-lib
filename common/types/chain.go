@@ -109,12 +109,29 @@ type EventHandler interface {
 	ShutdownListeners()
 }
 
+// BalanceProvider provides functionality for getting token balances.
+type BalanceProvider interface {
+	// GetTokenBalance gets token balance for the given address.
+	// For native token balances, use tokenAddress as empty string or ZeroAddress
+	//
+	// Parameters:
+	// - ctx: the context for managing the request
+	// - address: the address to check balance for
+	// - tokenAddress: the token contract address
+	//
+	// Returns:
+	// - *big.Int: the token balance
+	// - error: an error if the balance check fails
+	GetTokenBalance(ctx context.Context, address string, tokenAddress string) (*big.Int, error)
+}
+
 // Chain combines all chain-specific functionality.
 type Chain interface {
 	GasEstimator
 	TransactionSender
 	TransactionWatcher
 	EventHandler
+	BalanceProvider
 }
 
 // ChainRegistry manages multiple chains.

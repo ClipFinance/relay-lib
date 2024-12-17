@@ -50,7 +50,7 @@ func NewSolanaChain(config *types.ChainConfig, logger *logrus.Logger) (types.Cha
 	}
 
 	if err := chain.initMonitor(ctx); err != nil {
-		return nil, errors.Wrap(err, "failed to init connection connectionmonitor")
+		return nil, errors.Wrap(err, "failed to init connection connection monitor")
 	}
 
 	builder := chainmanager.NewChainBuilder(config)
@@ -74,8 +74,8 @@ func NewSolanaChain(config *types.ChainConfig, logger *logrus.Logger) (types.Cha
 	}
 
 	builder.WithTransactionWatcher(chain)
-
 	builder.WithEventHandler(chain)
+	builder.WithBalanceProvider(chain)
 
 	return builder.Build(), nil
 }
