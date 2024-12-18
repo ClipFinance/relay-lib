@@ -185,7 +185,7 @@ func (c *Chain) WaitTransactionConfirmation(ctx context.Context, tx *types.Trans
 	defer c.watcherMutex.RUnlock()
 
 	if c.watcher == nil {
-		return types.TxStatusFailed, ErrNotImplemented
+		return types.TxFailed, ErrNotImplemented
 	}
 	return c.watcher.WaitTransactionConfirmation(ctx, tx)
 }

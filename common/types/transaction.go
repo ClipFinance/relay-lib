@@ -4,12 +4,12 @@ package types
 type TransactionStatus int
 
 const (
-	// TxStatusFailed represents a failed transaction.
-	TxStatusFailed TransactionStatus = iota
-	// TxStatusDone represents a successfully confirmed transaction.
-	TxStatusDone
-	// TxStatusNeedsRetry represents a transaction that needs to be retried.
-	TxStatusNeedsRetry
+	// TxFailed represents a failed transaction.
+	TxFailed TransactionStatus = iota
+	// TxDone represents a successfully confirmed transaction.
+	TxDone
+	// TxNeedsRetry represents a transaction that needs to be retried.
+	TxNeedsRetry
 )
 
 // Transaction represents a blockchain transaction.
