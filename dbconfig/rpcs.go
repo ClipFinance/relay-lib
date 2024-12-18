@@ -17,12 +17,12 @@ import (
 // Returns:
 // - []models.RPC: a slice of RPC models.
 // - error: an error if the database operation fails.
-func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeOnly bool) ([]models.RPC, error) {
+func (dc *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeOnly bool) ([]models.RPC, error) {
 	if chainID == 0 {
 		return nil, ErrInvalidChainID
 	}
 
-	db, err := sql.Open("postgres", r.dbConnStr)
+	db, err := sql.Open("postgres", dc.dbConnStr)
 	if err != nil {
 		return nil, ErrDatabaseConnect
 	}
@@ -106,12 +106,12 @@ func (r *DBConfig) GetRPCsByChainID(ctx context.Context, chainID uint64, activeO
 // Returns:
 // - []models.RPC: a slice of RPC models.
 // - error: an error if the database operation fails.
-func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly bool) ([]models.RPC, error) {
+func (dc *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly bool) ([]models.RPC, error) {
 	if agentID == 0 {
 		return nil, ErrInvalidAgentID
 	}
 
-	db, err := sql.Open("postgres", r.dbConnStr)
+	db, err := sql.Open("postgres", dc.dbConnStr)
 	if err != nil {
 		return nil, ErrDatabaseConnect
 	}
@@ -168,7 +168,7 @@ func (r *DBConfig) GetAgentRPCs(ctx context.Context, agentID int64, activeOnly b
 		}
 
 		if rpc.URL == "" {
-			r.logger.WithFields(logrus.Fields{
+			dc.logger.WithFields(logrus.Fields{
 				"rpcID":   rpc.ID,
 				"chainID": rpc.ChainID,
 				"agentID": rpc.AgentID,

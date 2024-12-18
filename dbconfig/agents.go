@@ -15,12 +15,12 @@ import (
 // Returns:
 // - *models.Agent: a pointer to the Agent model.
 // - error: an error if the database operation fails or the agent is not found.
-func (r *DBConfig) GetAgentByUID(ctx context.Context, uid string) (*models.Agent, error) {
+func (dc *DBConfig) GetAgentByUID(ctx context.Context, uid string) (*models.Agent, error) {
 	if uid == "" {
 		return nil, ErrInvalidAgentID
 	}
 
-	db, err := sql.Open("postgres", r.dbConnStr)
+	db, err := sql.Open("postgres", dc.dbConnStr)
 	if err != nil {
 		return nil, ErrDatabaseConnect
 	}

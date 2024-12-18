@@ -16,8 +16,8 @@ import (
 // Returns:
 // - []models.Chain: a slice of Chain models.
 // - error: an error if the database operation fails.
-func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Chain, error) {
-	db, err := sql.Open("postgres", r.dbConnStr)
+func (dc *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Chain, error) {
+	db, err := sql.Open("postgres", dc.dbConnStr)
 	if err != nil {
 		return nil, ErrDatabaseConnect
 	}
@@ -96,12 +96,12 @@ func (r *DBConfig) GetChains(ctx context.Context, activeOnly bool) ([]models.Cha
 // Returns:
 // - *models.Chain: a pointer to the Chain model.
 // - error: an error if the database operation fails or the chain is not found.
-func (r *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Chain, error) {
+func (dc *DBConfig) GetChainByID(ctx context.Context, chainID uint64) (*models.Chain, error) {
 	if chainID == 0 {
 		return nil, ErrInvalidChainID
 	}
 
-	db, err := sql.Open("postgres", r.dbConnStr)
+	db, err := sql.Open("postgres", dc.dbConnStr)
 	if err != nil {
 		return nil, ErrDatabaseConnect
 	}

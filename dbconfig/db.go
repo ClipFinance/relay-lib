@@ -3,6 +3,11 @@ package dbconfig
 import (
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+	"time"
+)
+
+const (
+	ExpirationTime = 1 * time.Hour
 )
 
 type DBConfig struct {
