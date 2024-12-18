@@ -69,7 +69,7 @@ type TransactionWatcher interface {
 	// Returns:
 	// - bool: true if the transaction is confirmed successfully, false otherwise.
 	// - error: an error if the transaction confirmation fails.
-	WaitTransactionConfirmation(ctx context.Context, tx *Transaction) (bool, error)
+	WaitTransactionConfirmation(ctx context.Context, tx *Transaction) (TransactionStatus, error)
 }
 
 // EventHandler provides event subscription functionality.

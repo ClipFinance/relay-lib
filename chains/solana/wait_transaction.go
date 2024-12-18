@@ -5,7 +5,7 @@ import (
 	"github.com/ClipFinance/relay-lib/common/types"
 )
 
-func (s *solana) WaitTransactionConfirmation(ctx context.Context, tx *types.Transaction) (bool, error) {
+func (s *solana) WaitTransactionConfirmation(ctx context.Context, tx *types.Transaction) (types.TransactionStatus, error) {
 	// TODO: Implement transaction confirmation waiting for Solana
-	return false, nil
+	return types.TxStatusFailed, nil
 }

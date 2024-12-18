@@ -2,7 +2,7 @@ package chainmanager
 
 import (
 	"context"
-	relaytypes "github.com/ClipFinance/relay-lib/common/types"
+	"github.com/ClipFinance/relay-lib/common/types"
 	"math/big"
 	"sync"
 )
@@ -11,12 +11,12 @@ import (
 // It provides methods to interact with the chain's gas estimator, transaction sender, transaction watcher, and event handler.
 // Each dependency is protected by a read-write mutex to ensure thread-safe access.
 type Chain struct {
-	config    *relaytypes.ChainConfig       // Chain configuration.
-	estimator relaytypes.GasEstimator       // Gas estimator implementation.
-	sender    relaytypes.TransactionSender  // Transaction sender implementation.
-	watcher   relaytypes.TransactionWatcher // Transaction watcher implementation.
-	handler   relaytypes.EventHandler       // Event handler implementation.
-	provider  relaytypes.BalanceProvider    // Balance provider implementation.
+	config    *types.ChainConfig       // Chain configuration.
+	estimator types.GasEstimator       // Gas estimator implementation.
+	sender    types.TransactionSender  // Transaction sender implementation.
+	watcher   types.TransactionWatcher // Transaction watcher implementation.
+	handler   types.EventHandler       // Event handler implementation.
+	provider  types.BalanceProvider    // Balance provider implementation.
 
 	// Mutexes for thread-safe access to dependencies.
 	estimatorMutex sync.RWMutex // Mutex for gas estimator.
@@ -38,12 +38,12 @@ type Chain struct {
 // Returns:
 // - *Chain: a new Chain instance.
 func NewChain(
-	config *relaytypes.ChainConfig,
-	estimator relaytypes.GasEstimator,
-	sender relaytypes.TransactionSender,
-	watcher relaytypes.TransactionWatcher,
-	handler relaytypes.EventHandler,
-	provider relaytypes.BalanceProvider,
+	config *types.ChainConfig,
+	estimator types.GasEstimator,
+	sender types.TransactionSender,
+	watcher types.TransactionWatcher,
+	handler types.EventHandler,
+	provider types.BalanceProvider,
 ) *Chain {
 	return &Chain{
 		config:    config,
@@ -65,7 +65,7 @@ func NewChain(
 //
 // Returns:
 // - error: an error if the handler is not implemented or if any issue occurs during initialization.
-func (c *Chain) InitWSSubscription(ctx context.Context, eventChan chan relaytypes.ChainEvent) error {
+func (c *Chain) InitWSSubscription(ctx context.Context, eventChan chan types.ChainEvent) error {
 	c.handlerMutex.RLock()
 	defer c.handlerMutex.RUnlock()
 
@@ -85,7 +85,7 @@ func (c *Chain) InitWSSubscription(ctx context.Context, eventChan chan relaytype
 //
 // Returns:
 // - error: an error if the handler is not implemented or if any issue occurs during initialization.
-func (c *Chain) InitHTTPPolling(ctx context.Context, eventChan chan relaytypes.ChainEvent) error {
+func (c *Chain) InitHTTPPolling(ctx context.Context, eventChan chan types.ChainEvent) error {
 	c.handlerMutex.RLock()
 	defer c.handlerMutex.RUnlock()
 
@@ -104,7 +104,7 @@ func (c *Chain) InitHTTPPolling(ctx context.Context, eventChan chan relaytypes.C
 //
 // Returns:
 // - error: an error if the transaction validation fails.
-func (c *Chain) ValidateTransaction(ctx context.Context, quote *relaytypes.Quote, event relaytypes.ChainEvent) error {
+func (c *Chain) ValidateTransaction(ctx context.Context, quote *types.Quote, event types.ChainEvent) error {
 	c.handlerMutex.RLock()
 	defer c.handlerMutex.RUnlock()
 
@@ -157,9 +157,9 @@ func (c *Chain) EstimateGas(ctx context.Context, to string, value *big.Int, data
 // - intent: the transaction intent containing details of the asset to be sent.
 //
 // Returns:
-// - *relaytypes.Transaction: the transaction instance.
+// - *types.Transaction: the transaction instance.
 // - error: an error if the sender is not implemented or if any issue occurs during sending.
-func (c *Chain) SendAsset(ctx context.Context, intent *relaytypes.Intent) (*relaytypes.Transaction, error) {
+func (c *Chain) SendAsset(ctx context.Context, intent *types.Intent) (*types.Transaction, error) {
 	c.senderMutex.RLock()
 	defer c.senderMutex.RUnlock()
 
@@ -180,12 +180,12 @@ func (c *Chain) SendAsset(ctx context.Context, intent *relaytypes.Intent) (*rela
 // Returns:
 // - bool: true if the transaction is confirmed, false otherwise.
 // - error: an error if the watcher is not implemented or if any issue occurs during confirmation.
-func (c *Chain) WaitTransactionConfirmation(ctx context.Context, tx *relaytypes.Transaction) (bool, error) {
+func (c *Chain) WaitTransactionConfirmation(ctx context.Context, tx *types.Transaction) (types.TransactionStatus, error) {
 	c.watcherMutex.RLock()
 	defer c.watcherMutex.RUnlock()
 
 	if c.watcher == nil {
-		return false, ErrNotImplemented
+		return types.TxStatusFailed, ErrNotImplemented
 	}
 	return c.watcher.WaitTransactionConfirmation(ctx, tx)
 }
@@ -193,8 +193,8 @@ func (c *Chain) WaitTransactionConfirmation(ctx context.Context, tx *relaytypes.
 // GetConfig returns chain configuration.
 //
 // Returns:
-// - *relaytypes.ChainConfig: the chain configuration instance.
-func (c *Chain) GetConfig() *relaytypes.ChainConfig {
+// - *types.ChainConfig: the chain configuration instance.
+func (c *Chain) GetConfig() *types.ChainConfig {
 	return c.config
 }
 
@@ -228,8 +228,8 @@ func (c *Chain) SolverAddress() string {
 // It locks the estimator mutex for reading to ensure safe concurrent access to the estimator.
 //
 // Returns:
-// - relaytypes.GasEstimator: the gas estimator instance.
-func (c *Chain) GetEstimator() relaytypes.GasEstimator {
+// - types.GasEstimator: the gas estimator instance.
+func (c *Chain) GetEstimator() types.GasEstimator {
 	c.estimatorMutex.RLock()
 	defer c.estimatorMutex.RUnlock()
 	return c.estimator
@@ -239,8 +239,8 @@ func (c *Chain) GetEstimator() relaytypes.GasEstimator {
 // It locks the sender mutex for reading to ensure safe concurrent access to the sender.
 //
 // Returns:
-// - relaytypes.TransactionSender: the transaction sender instance.
-func (c *Chain) GetSender() relaytypes.TransactionSender {
+// - types.TransactionSender: the transaction sender instance.
+func (c *Chain) GetSender() types.TransactionSender {
 	c.senderMutex.RLock()
 	defer c.senderMutex.RUnlock()
 	return c.sender
@@ -250,8 +250,8 @@ func (c *Chain) GetSender() relaytypes.TransactionSender {
 // It locks the watcher mutex for reading to ensure safe concurrent access to the watcher.
 //
 // Returns:
-// - relaytypes.TransactionWatcher: the transaction watcher instance.
-func (c *Chain) GetWatcher() relaytypes.TransactionWatcher {
+// - types.TransactionWatcher: the transaction watcher instance.
+func (c *Chain) GetWatcher() types.TransactionWatcher {
 	c.watcherMutex.RLock()
 	defer c.watcherMutex.RUnlock()
 	return c.watcher

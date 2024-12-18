@@ -21,19 +21,19 @@ import (
 // Returns:
 // - bool: true if the transaction is confirmed successfully, false otherwise.
 // - error: an error if the client is not initialized, if there is an issue getting the block number, or if the transaction receipt retrieval fails.
-func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transaction) (bool, error) {
+func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transaction) (types.TransactionStatus, error) {
 	e.clientMutex.RLock()
 	client := e.client
 	e.clientMutex.RUnlock()
 
 	if client == nil {
-		return false, errors.New("client not initialized")
+		return types.TxStatusNeedsRetry, errors.New("client not initialized")
 	}
 
 	start := time.Now()
 	blockNumber, err := client.BlockNumber(ctx)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to get current block number")
+		return types.TxStatusNeedsRetry, errors.Wrap(err, "failed to get current block number")
 	}
 
 	ticker := time.NewTicker(time.Second)
@@ -42,14 +42,14 @@ func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transac
 	for {
 		select {
 		case <-ctx.Done():
-			e.logger.WithField("txHash", tx.Hash).Error("Context done waiting for transaction receipt")
-			return false, ctx.Err()
+			e.logger.WithField("txHash", tx.Hash).Error("WaitTransactionConfirmation: context done")
+			return types.TxStatusFailed, ctx.Err()
 
 		case <-ticker.C:
 			if time.Since(start) > waitTimeout {
 				currentBlock, err := client.BlockNumber(ctx)
 				if err != nil {
-					return false, errors.Wrap(err, "failed to get current block number")
+					return types.TxStatusFailed, errors.Wrap(err, "failed to get current block number")
 				}
 				// TODO: use SubscribeNewHead
 
@@ -61,9 +61,9 @@ func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transac
 								"originalTx": tx.Hash,
 								"cancelTx":   cancelTx.Hash,
 							}).Info("Transaction cancelled successfully")
-							return false, errors.New("transaction cancelled due to timeout")
+							return types.TxStatusFailed, errors.New("transaction cancelled due to timeout")
 						}
-						return false, errors.New("failed to cancel stuck transaction")
+						return types.TxStatusFailed, errors.New("failed to cancel stuck transaction")
 					}
 					tx = &types.Transaction{
 						Hash:       newTx.Hash().Hex(),
@@ -86,19 +86,26 @@ func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transac
 				if errors.Is(err, ethereum.NotFound) {
 					continue
 				}
-				return false, errors.Wrap(err, "failed to get transaction receipt")
+				return types.TxStatusFailed, errors.Wrap(err, "failed to get transaction receipt")
 			}
 
 			currentBlock, err := client.BlockNumber(ctx)
 			if err != nil {
-				return false, errors.Wrap(err, "failed to get current block number")
+				return types.TxStatusFailed, errors.Wrap(err, "failed to get current block number")
 			}
 
 			if currentBlock < receipt.BlockNumber.Uint64()+e.config.WaitNBlocks {
 				continue
 			}
 
-			return receipt.Status == ethtypes.ReceiptStatusSuccessful, nil
+			var status types.TransactionStatus
+			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
+				status = types.TxStatusDone
+			} else {
+				status = types.TxStatusFailed
+			}
+
+			return status, nil
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/ClipFinance/relay-lib/common/types"
+	"github.com/pkg/errors"
 )
 
 // InsertIntent inserts or updates an intent in the database.
@@ -77,4 +78,39 @@ func (r *DBConfig) InsertIntent(ctx context.Context, intent *types.Intent) error
 	)
 
 	return err
+}
+
+// SetCreatedIntentStatus updates the status of an intent to created and sets the to_tx field to null.
+func (r *DBConfig) SetCreatedIntentStatus(ctx context.Context, quoteID string) error {
+	db, err := sql.Open("postgres", r.dbConnStr)
+	if err != nil {
+		return errors.Wrap(err, "failed to connect to database")
+	}
+	defer db.Close()
+
+	query := `
+		UPDATE intent 
+			SET status = $1, 
+			    to_tx = NULL, 
+			    to_tx_set_at = NULL, 
+			    to_nonce = NULL, 
+			    retries = retries + 1
+		WHERE quote_id = $2
+    `
+
+	result, err := db.ExecContext(ctx, query, types.StatusCreated, quoteID)
+	if err != nil {
+		return errors.Wrap(err, "failed to update intent status")
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, "failed to get rows affected")
+	}
+
+	if rowsAffected == 0 {
+		return errors.Errorf("intent with quoteID %s not found", quoteID)
+	}
+
+	return nil
 }

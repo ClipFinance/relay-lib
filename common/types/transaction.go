@@ -1,5 +1,17 @@
 package types
 
+// TransactionStatus represents the status of a transaction.
+type TransactionStatus int
+
+const (
+	// TxStatusFailed represents a failed transaction.
+	TxStatusFailed TransactionStatus = iota
+	// TxStatusDone represents a successfully confirmed transaction.
+	TxStatusDone
+	// TxStatusNeedsRetry represents a transaction that needs to be retried.
+	TxStatusNeedsRetry
+)
+
 // Transaction represents a blockchain transaction.
 //
 // Fields:
@@ -12,6 +24,7 @@ package types
 // - Nonce: the nonce of the transaction.
 // - ChainID: the unique identifier for the chain where the transaction occurred.
 // - QuoteID: the identifier for the quote associated with the transaction.
+// - Metadata: additional metadata associated with the transaction.
 type Transaction struct {
 	Hash       string
 	From       string
@@ -22,6 +35,7 @@ type Transaction struct {
 	Nonce      uint64
 	ChainID    uint64
 	QuoteID    string
+	Metadata   interface{}
 }
 
 // Parameters represents transaction parameters.
