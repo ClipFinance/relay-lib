@@ -10,5 +10,4 @@ type EvmMetadata struct {
 	EventType string
 	LogIndex  uint
 	Data      []byte
-	FromNonce uint64
 }

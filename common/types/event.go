@@ -32,5 +32,6 @@ type ChainEvent struct {
 	QuoteID           string
 	FromTxMinedAt     time.Time
 	TransactionAmount string
+	FromNonce         uint64
 	Metadata          interface{}
 }
