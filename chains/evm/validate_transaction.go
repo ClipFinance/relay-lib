@@ -2,6 +2,7 @@ package evm
 
 import (
 	"context"
+	"github.com/ClipFinance/relay-lib/chains/evm/utils"
 	"math/big"
 
 	"github.com/ClipFinance/relay-lib/common/types"
@@ -48,7 +49,7 @@ func (e *evm) ValidateTransaction(ctx context.Context, quote *types.Quote, event
 // validateTransaction validates transaction details against quote parameters
 func (e *evm) validateTransaction(quote *types.Quote, tx *ethtypes.Transaction, event types.ChainEvent, solverAddr string) error {
 	// Validate transaction type (native token transfer or ERC20 token transfer)
-	if quote.Parameters.FromToken == ZeroAddress {
+	if quote.Parameters.FromToken == utils.ZeroAddress {
 		// Validate native token transfer transaction
 		return e.validateNativeTransfer(quote, tx)
 	}

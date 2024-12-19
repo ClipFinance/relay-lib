@@ -1,4 +1,4 @@
-package evm
+package utils
 
 const (
 	// ZeroAddress represents the zero address.

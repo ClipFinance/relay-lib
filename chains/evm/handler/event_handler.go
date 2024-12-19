@@ -194,7 +194,7 @@ func (h *EventHandler) processEvent(eventType string, log ethtypes.Log) error {
 		FromTxMinedAt:     time.Unix(int64(block.Time), 0),
 		FromNonce:         tx.Nonce(),
 		TransactionAmount: amount,
-		Metadata: evm.EvmMetadata{
+		Metadata: utils.EvmMetadata{
 			EventType: eventType,
 			LogIndex:  log.Index,
 			Data:      log.Data,
