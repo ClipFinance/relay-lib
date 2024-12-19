@@ -144,6 +144,14 @@ func (e *evm) prepareTransaction(ctx context.Context, nonce uint64, toAddress st
 			return nil, errors.Wrap(err, "failed to get EIP-1559 gas price")
 		}
 
+		// Check profitability before preparing transaction
+		if !e.calculateTransactionProfitability(&types.Transaction{
+			FromAmount: value.String(),
+			ToAmount:   value.String(),
+		}, new(big.Int).SetUint64(gasLimit), gasPriceData.MaxFeePerGas) {
+			return nil, errors.New("transaction is not profitable")
+		}
+
 		return ethtypes.NewTx(&ethtypes.DynamicFeeTx{
 			ChainID:    big.NewInt(0).SetUint64(e.config.ChainID),
 			Nonce:      nonce,
@@ -157,13 +165,23 @@ func (e *evm) prepareTransaction(ctx context.Context, nonce uint64, toAddress st
 		}), nil
 	}
 
-	gasPrice, err := client.SuggestGasPrice(ctx)
+	gasPrice, err := e.estimateLegacyGasPrice(ctx, to.Hex(), value, data)
 	if err != nil {
+		e.logger.WithField("chain", e.config.Name).WithError(err).Error("Failed to get gas price")
 		return nil, errors.Wrap(err, "failed to get gas price")
 	}
 
-	gasPrice = new(big.Int).Mul(gasPrice, big.NewInt(150))
+	// Add 10% buffer to gas price.
+	gasPrice = new(big.Int).Mul(gasPrice, big.NewInt(gasIncreaseFactor))
 	gasPrice = new(big.Int).Div(gasPrice, big.NewInt(100))
+
+	// Check profitability before preparing transaction
+	if !e.calculateTransactionProfitability(&types.Transaction{
+		FromAmount: value.String(),
+		ToAmount:   value.String(),
+	}, new(big.Int).SetUint64(gasLimit), gasPrice) {
+		return nil, errors.New("transaction is not profitable")
+	}
 
 	return ethtypes.NewTransaction(
 		nonce,
@@ -211,4 +229,32 @@ func (e *evm) signAndSendTransaction(ctx context.Context, tx *ethtypes.Transacti
 	}
 
 	return signedTx, nil
+}
+
+// calculateTransactionProfitability checks if transaction remains profitable with new gas price
+func (e *evm) calculateTransactionProfitability(tx *types.Transaction, gas, gasPrice *big.Int) bool {
+	// Convert string amounts to big.Int
+	fromAmount := new(big.Int)
+	fromAmount.SetString(tx.FromAmount, 10)
+
+	toAmount := new(big.Int)
+	toAmount.SetString(tx.ToAmount, 10)
+
+	// Calculate gas cost
+	gasCost := new(big.Int).Mul(gas, gasPrice)
+
+	// Calculate total cost (fromAmount + gas)
+	totalCost := new(big.Int).Add(fromAmount, gasCost)
+
+	// Calculate profit
+	profit := new(big.Int).Sub(toAmount, totalCost)
+
+	// Calculate minimum required profit (1% of total cost)
+	minProfit := new(big.Int).Div(
+		new(big.Int).Mul(totalCost, big.NewInt(minProfitPercentage)),
+		big.NewInt(100),
+	)
+
+	// Check if profit is greater than minimum required
+	return profit.Cmp(minProfit) > 0
 }
