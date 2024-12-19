@@ -2,15 +2,16 @@ package handler
 
 import (
 	"context"
+	"math/big"
+	"sync"
+	"time"
+
 	"github.com/ClipFinance/relay-lib/chains/evm/utils"
 	relaytypes "github.com/ClipFinance/relay-lib/common/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"math/big"
-	"sync"
-	"time"
 )
 
 // Constants for event handler timeouts and retry attempts.
@@ -80,7 +81,7 @@ func NewEventHandler(
 //
 // Parameters:
 // - client: the new Ethereum client.
-func (h *EventHandler) UpdateClient(client *ethclient.Client) {
+func (h *EventHandler) UpdateClient(ctx context.Context, client *ethclient.Client) {
 	h.cancel()
 
 	if h.relaySubscription != nil {
@@ -92,7 +93,7 @@ func (h *EventHandler) UpdateClient(client *ethclient.Client) {
 		h.transferSubscription = &Subscription{}
 	}
 
-	handlerCtx, cancel := context.WithCancel(context.Background())
+	handlerCtx, cancel := context.WithCancel(ctx)
 	h.ctx = handlerCtx
 	h.cancel = cancel
 

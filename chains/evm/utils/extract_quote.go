@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
@@ -16,7 +17,7 @@ const (
 // ExtractQuoteIDFromTxData extracts quote ID from transaction input data
 func ExtractQuoteIDFromTxData(data []byte) (string, error) {
 	if len(data) <= minTransferInputLength {
-		return "", errors.New("invalid transaction input length, expected: " + fmt.Sprint(minTransferInputLength) + ", got: " + fmt.Sprint(len(data)))
+		return "", errors.New("invalid transaction input length, expected min than: " + fmt.Sprint(minTransferInputLength) + ", got: " + fmt.Sprint(len(data)))
 	}
 
 	quoteIDBytes := data[minTransferInputLength:]

@@ -2,6 +2,7 @@ package evm
 
 import (
 	"context"
+
 	"github.com/ClipFinance/relay-lib/connectionmonitor"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
@@ -72,7 +73,7 @@ func (w *evmConnectionManager) Reconnect(ctx context.Context) error {
 
 	w.chain.eventHandlerMutex.Lock()
 	if w.chain.eventHandler != nil {
-		w.chain.eventHandler.UpdateClient(client)
+		w.chain.eventHandler.UpdateClient(ctx, client)
 	}
 	w.chain.eventHandlerMutex.Unlock()
 

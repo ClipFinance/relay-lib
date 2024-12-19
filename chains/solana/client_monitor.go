@@ -3,6 +3,7 @@ package solana
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/ClipFinance/relay-lib/connectionmonitor"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -22,7 +23,12 @@ func (m *solanaConnectionManager) CheckConnection(ctx context.Context) error {
 		return errors.New("client not initialized")
 	}
 
-	// TODO: Implement actual connection check
+	// Get latest slot (block) as health check
+	_, err := m.chain.client.GetSlot(ctx, rpc.CommitmentFinalized)
+	if err != nil {
+		return fmt.Errorf("failed to get slot: %w", err)
+	}
+
 	return nil
 }
 
