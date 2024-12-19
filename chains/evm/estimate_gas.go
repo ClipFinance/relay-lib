@@ -2,8 +2,10 @@ package evm
 
 import (
 	"context"
+	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"math/big"
 )
@@ -103,4 +105,33 @@ func (e *evm) getEIP1559GasPrice(ctx context.Context) (*GasPriceData, error) {
 		MaxPriorityFeePerGas: suggestedTip,
 		IsEIP1559:            true,
 	}, nil
+}
+
+func (e *evm) estimateLegacyGasPrice(ctx context.Context, toAddress string, value *big.Int, data []byte) (*big.Int, error) {
+	to := common.HexToAddress(toAddress)
+
+	// TODO: refactor this using lineal_estimateGas to avoid if-else condition.
+	if e.config.ChainID == 59144 {
+		var gasEstimate map[string]string
+		err := e.client.Client().CallContext(ctx, &gasEstimate, "linea_estimateGas", map[string]interface{}{
+			"from":  e.signer.Address(),
+			"to":    to.Hex(),
+			"value": value,
+			"data":  data,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to estimate gas using linea_estimateGas: %v", err)
+		}
+
+		baseFee, err := hexutil.DecodeUint64(gasEstimate["baseFeePerGas"])
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode gas limit: %v", err)
+		}
+
+		baseFeeBI := new(big.Int).SetUint64(baseFee)
+
+		return baseFeeBI, nil
+	}
+
+	return e.client.SuggestGasPrice(ctx)
 }

@@ -9,8 +9,36 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"math/big"
+	"sync"
 	"time"
 )
+
+const ( // minProfitPercentage defines minimum profit percentage for transaction to be considered profitable.
+	minProfitPercentage = 1
+	// gasIncreaseFactor defines minimum gas increase percentage for replacement transaction to be considered profitable.
+	gasIncreaseFactor = 110 // 110%
+)
+
+// subscriptionHandler manages block header subscriptions
+type subscriptionHandler struct {
+	subscription ethereum.Subscription
+	headerChan   chan *ethtypes.Header
+	sync.RWMutex
+}
+
+// close safely closes subscription and channel
+func (h *subscriptionHandler) close() {
+	h.Lock()
+	defer h.Unlock()
+	if h.subscription != nil {
+		h.subscription.Unsubscribe()
+		h.subscription = nil
+	}
+	if h.headerChan != nil {
+		close(h.headerChan)
+		h.headerChan = nil
+	}
+}
 
 // WaitTransactionConfirmation waits for the confirmation of a transaction.
 //
@@ -36,6 +64,91 @@ func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transac
 		return types.TxNeedsRetry, errors.Wrap(err, "failed to get current block number")
 	}
 
+	// Use subscription based on RPC URL type
+	if types.GetSubscriptionMode(e.config.RpcUrl) == types.WebSocketMode {
+		return e.waitTransactionConfirmationWS(ctx, tx, blockNumber, start)
+	}
+	return e.waitTransactionConfirmationHTTP(ctx, tx, blockNumber, start)
+}
+
+// waitTransactionConfirmationWS waits for transaction confirmation using WebSocket subscription
+func (e *evm) waitTransactionConfirmationWS(ctx context.Context, tx *types.Transaction, startBlock uint64, startTime time.Time) (types.TransactionStatus, error) {
+	e.clientMutex.RLock()
+	client := e.client
+	e.clientMutex.RUnlock()
+
+	handler := &subscriptionHandler{
+		headerChan: make(chan *ethtypes.Header),
+	}
+	defer handler.close()
+
+	// Subscribe to new block headers
+	sub, err := client.SubscribeNewHead(ctx, handler.headerChan)
+	if err != nil {
+		return types.TxNeedsRetry, errors.Wrap(err, "failed to subscribe to new headers")
+	}
+
+	handler.Lock()
+	handler.subscription = sub
+	handler.Unlock()
+
+	for {
+		select {
+		case <-ctx.Done():
+			e.logger.WithField("txHash", tx.Hash).Error("WaitTransactionConfirmation: context done")
+			return types.TxFailed, ctx.Err()
+
+		case err := <-sub.Err():
+			return types.TxNeedsRetry, errors.Wrap(err, "subscription error")
+
+		case header := <-handler.headerChan:
+			if header == nil {
+				continue
+			}
+
+			// Check for stuck transaction
+			if time.Since(startTime) > waitTimeout {
+				currentBlock := header.Number.Uint64()
+				if currentBlock > startBlock+2 {
+					status, err := e.handleStuckTransaction(ctx, tx)
+					if err != nil {
+						return status, err
+					}
+					// Reset timer and block number for new transaction
+					startTime = time.Now()
+					startBlock = currentBlock
+					continue
+				}
+			}
+
+			// Check transaction receipt
+			receipt, err := client.TransactionReceipt(ctx, common.HexToHash(tx.Hash))
+			if err != nil {
+				if errors.Is(err, ethereum.NotFound) {
+					continue
+				}
+				return types.TxFailed, errors.Wrap(err, "failed to get transaction receipt")
+			}
+
+			// Wait for required block confirmations
+			if header.Number.Uint64() < receipt.BlockNumber.Uint64()+e.config.WaitNBlocks {
+				continue
+			}
+
+			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
+				return types.TxDone, nil
+			}
+			return types.TxFailed, nil
+		}
+	}
+}
+
+// waitTransactionConfirmationHTTP waits for transaction confirmation using HTTP polling
+func (e *evm) waitTransactionConfirmationHTTP(ctx context.Context, tx *types.Transaction, startBlock uint64, startTime time.Time) (types.TransactionStatus, error) {
+	e.clientMutex.RLock()
+	client := e.client
+	e.clientMutex.RUnlock()
+
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
@@ -46,37 +159,21 @@ func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transac
 			return types.TxFailed, ctx.Err()
 
 		case <-ticker.C:
-			if time.Since(start) > waitTimeout {
+			// Check for stuck transaction
+			if time.Since(startTime) > waitTimeout {
 				currentBlock, err := client.BlockNumber(ctx)
 				if err != nil {
 					return types.TxFailed, errors.Wrap(err, "failed to get current block number")
 				}
-				// TODO: use SubscribeNewHead
 
-				if currentBlock > blockNumber+2 {
-					newTx, err := e.replaceTransaction(ctx, tx)
+				if currentBlock > startBlock+2 {
+					status, err := e.handleStuckTransaction(ctx, tx)
 					if err != nil {
-						if cancelTx, err := e.cancelTransaction(ctx, tx); err == nil {
-							e.logger.WithFields(logrus.Fields{
-								"originalTx": tx.Hash,
-								"cancelTx":   cancelTx.Hash,
-							}).Info("Transaction cancelled successfully")
-							return types.TxFailed, errors.New("transaction cancelled due to timeout")
-						}
-						return types.TxFailed, errors.New("failed to cancel stuck transaction")
+						return status, err
 					}
-					tx = &types.Transaction{
-						Hash:       newTx.Hash().Hex(),
-						From:       e.signer.Address().Hex(),
-						To:         tx.To,
-						FromAmount: tx.FromAmount,
-						ToAmount:   tx.ToAmount,
-						Token:      tx.Token,
-						Nonce:      tx.Nonce,
-						ChainID:    e.config.ChainID,
-						QuoteID:    tx.QuoteID,
-					}
-					start = time.Now()
+					// Reset timer and block number for new transaction
+					startTime = time.Now()
+					startBlock = currentBlock
 					continue
 				}
 			}
@@ -98,16 +195,110 @@ func (e *evm) WaitTransactionConfirmation(ctx context.Context, tx *types.Transac
 				continue
 			}
 
-			var status types.TransactionStatus
 			if receipt.Status == ethtypes.ReceiptStatusSuccessful {
-				status = types.TxDone
-			} else {
-				status = types.TxFailed
+				return types.TxDone, nil
 			}
-
-			return status, nil
+			return types.TxFailed, nil
 		}
 	}
+}
+
+// handleStuckTransaction handles stuck transaction by attempting to replace or cancel it
+func (e *evm) handleStuckTransaction(ctx context.Context, tx *types.Transaction) (types.TransactionStatus, error) {
+	newTx, err := e.replaceTransaction(ctx, tx)
+	if err != nil {
+		if cancelTx, err := e.cancelTransaction(ctx, tx); err == nil {
+			e.logger.WithFields(logrus.Fields{
+				"originalTx": tx.Hash,
+				"cancelTx":   cancelTx.Hash(),
+			}).Info("Transaction cancelled successfully")
+			return types.TxFailed, errors.New("transaction cancelled due to timeout")
+		}
+		return types.TxFailed, errors.New("failed to cancel stuck transaction")
+	}
+
+	// Update transaction details with new transaction
+	tx.Hash = newTx.Hash().Hex()
+	tx.From = e.signer.Address().Hex()
+	return types.TxNeedsRetry, nil
+}
+
+// replaceTransaction replaces a pending transaction with a new one with a higher gas price.
+//
+// Parameters:
+// - ctx: the context for managing the request.
+// - tx: the transaction to be replaced.
+//
+// Returns:
+// - *ethtypes.Transaction: the new transaction details.
+// - error: an error if the client is not initialized, if the transaction retrieval fails, or if the transaction is not pending.
+func (e *evm) replaceTransaction(ctx context.Context, tx *types.Transaction) (*ethtypes.Transaction, error) {
+	e.clientMutex.RLock()
+	client := e.client
+	e.clientMutex.RUnlock()
+
+	if client == nil {
+		return nil, errors.New("client not initialized")
+	}
+
+	txHash := common.HexToHash(tx.Hash)
+
+	oldTx, isPending, err := client.TransactionByHash(ctx, txHash)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get transaction by hash")
+	}
+	if !isPending {
+		e.logger.WithFields(logrus.Fields{
+			"txHash": tx.Hash,
+			"chain":  e.config.Name,
+		}).Warn("transaction is not pending")
+		return nil, nil
+	}
+
+	// Get optimal gas price for replacement
+	newGasPrice, err := e.getNewGasPrice(ctx, oldTx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to calculate new gas price")
+	}
+
+	oldGas := oldTx.Gas()
+
+	// Check if transaction remains profitable with new gas price
+	if !e.calculateTransactionProfitability(tx, new(big.Int).SetUint64(oldGas), newGasPrice) {
+		if cancelTx, err := e.cancelTransaction(ctx, tx); err == nil {
+			e.logger.WithFields(logrus.Fields{
+				"originalTx": tx.Hash,
+				"cancelTx":   cancelTx.Hash(),
+			}).Info("Transaction cancelled due to unprofitability")
+			return nil, nil
+		}
+	}
+
+	var newTx *ethtypes.Transaction
+
+	if e.config.TxType == TxTypeEIP1559 {
+		newTx = ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+			ChainID:   oldTx.ChainId(),
+			Nonce:     oldTx.Nonce(),
+			GasTipCap: oldTx.GasTipCap(),
+			GasFeeCap: newGasPrice,
+			Gas:       oldTx.Gas(),
+			To:        oldTx.To(),
+			Value:     oldTx.Value(),
+			Data:      oldTx.Data(),
+		})
+	} else {
+		newTx = ethtypes.NewTransaction(
+			oldTx.Nonce(),
+			*oldTx.To(),
+			oldTx.Value(),
+			oldTx.Gas(),
+			newGasPrice,
+			oldTx.Data(),
+		)
+	}
+
+	return e.signAndSendTransaction(ctx, newTx)
 }
 
 // cancelTransaction cancels a pending transaction by sending a new transaction with the same nonce and higher gas price.
@@ -178,64 +369,41 @@ func (e *evm) cancelTransaction(ctx context.Context, tx *types.Transaction) (*et
 	return e.signAndSendTransaction(ctx, newTx)
 }
 
-// replaceTransaction replaces a pending transaction with a new one with a higher gas price.
-//
-// Parameters:
-// - ctx: the context for managing the request.
-// - tx: the transaction to be replaced.
-//
-// Returns:
-// - *ethtypes.Transaction: the new transaction details.
-// - error: an error if the client is not initialized, if the transaction retrieval fails, or if the transaction is not pending.
-func (e *evm) replaceTransaction(ctx context.Context, tx *types.Transaction) (*ethtypes.Transaction, error) {
+// getNewGasPrice calculates optimal gas price for replacement transaction
+func (e *evm) getNewGasPrice(ctx context.Context, oldTx *ethtypes.Transaction) (*big.Int, error) {
 	e.clientMutex.RLock()
 	client := e.client
 	e.clientMutex.RUnlock()
 
-	if client == nil {
-		return nil, errors.New("client not initialized")
-	}
-
-	txHash := common.HexToHash(tx.Hash)
-
-	oldTx, isPending, err := client.TransactionByHash(ctx, txHash)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get transaction by hash")
-	}
-	if !isPending {
-		e.logger.WithFields(logrus.Fields{
-			"txHash": tx.Hash,
-			"chain":  e.config.Name,
-		}).Warn("transaction is not pending")
-		return nil, nil
-	}
-
-	newGasPrice := new(big.Int).Mul(oldTx.GasPrice(), big.NewInt(110))
-	newGasPrice = newGasPrice.Div(newGasPrice, big.NewInt(100))
-
-	var newTx *ethtypes.Transaction
+	var currentGasPrice *big.Int
+	var err error
 
 	if e.config.TxType == TxTypeEIP1559 {
-		newTx = ethtypes.NewTx(&ethtypes.DynamicFeeTx{
-			ChainID:   oldTx.ChainId(),
-			Nonce:     oldTx.Nonce(),
-			GasTipCap: oldTx.GasTipCap(),
-			GasFeeCap: newGasPrice,
-			Gas:       oldTx.Gas(),
-			To:        oldTx.To(),
-			Value:     oldTx.Value(),
-			Data:      oldTx.Data(),
-		})
+		gasPriceData, err := e.getEIP1559GasPrice(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get EIP-1559 gas price")
+		}
+		currentGasPrice = gasPriceData.MaxFeePerGas
 	} else {
-		newTx = ethtypes.NewTransaction(
-			oldTx.Nonce(),
-			*oldTx.To(),
-			oldTx.Value(),
-			oldTx.Gas(),
-			newGasPrice,
-			oldTx.Data(),
-		)
+		currentGasPrice, err = client.SuggestGasPrice(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get current gas price")
+		}
 	}
 
-	return e.signAndSendTransaction(ctx, newTx)
+	oldGasPrice := oldTx.GasPrice()
+
+	// Calculate minimum required gas price (110% of old gas price)
+	minGasPrice := new(big.Int).Div(
+		new(big.Int).Mul(oldGasPrice, big.NewInt(gasIncreaseFactor)),
+		big.NewInt(100),
+	)
+
+	// If current gas price is higher than minimum required, use it
+	if currentGasPrice.Cmp(minGasPrice) > 0 {
+		return currentGasPrice, nil
+	}
+
+	// Otherwise use minimum required gas price
+	return minGasPrice, nil
 }
