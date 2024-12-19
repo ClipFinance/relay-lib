@@ -23,18 +23,15 @@ import (
 // - TransactionAmount: the amount of the transaction that emitted the event.
 type ChainEvent struct {
 	ChainID           uint64
-	EventType         string
 	BlockNumber       uint64
 	BlockHash         string
-	TxHash            string
-	LogIndex          uint
-	Data              []byte
 	FromTokenAddr     string
 	FromAddress       string
 	ToAddress         string
 	TransactionHash   string
 	QuoteID           string
 	FromTxMinedAt     time.Time
-	FromNonce         uint64
 	TransactionAmount string
+	FromNonce         uint64
+	Metadata          interface{}
 }
