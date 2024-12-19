@@ -3,7 +3,9 @@ package solana
 import (
 	"context"
 	"errors"
+
 	"github.com/ClipFinance/relay-lib/connectionmonitor"
+	"github.com/gagliardetto/solana-go/rpc"
 )
 
 // solanaConnectionManager implements connectionmonitor.BlockchainClient interface
@@ -32,10 +34,7 @@ func (m *solanaConnectionManager) Reconnect(ctx context.Context) error {
 		// TODO: Cleanup old client if needed
 	}
 
-	client, err := initSolanaClient(m.chain.config.RpcUrl)
-	if err != nil {
-		return err
-	}
+	client := rpc.New(m.chain.config.RpcUrl)
 
 	m.chain.client = client
 

@@ -2,12 +2,16 @@ package solana
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ClipFinance/relay-lib/chainmanager"
 	"github.com/ClipFinance/relay-lib/common/types"
 	"github.com/ClipFinance/relay-lib/connectionmonitor"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"sync"
+
+	sol "github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 )
 
 // solana represents the base Solana chain implementation
@@ -17,10 +21,10 @@ type solana struct {
 
 	// Protected fields with their own mutexes
 	clientMutex sync.RWMutex
-	client      interface{} // Replace with actual Solana client type
+	client      *rpc.Client
 
 	signerMutex sync.RWMutex
-	signer      interface{} // Replace with actual Solana signer type
+	signer      sol.PrivateKey
 
 	eventHandlerMutex sync.RWMutex
 	eventHandler      interface{} // Replace with actual Solana event handler type
@@ -34,14 +38,9 @@ type solana struct {
 }
 
 // NewSolanaChain creates a new Solana chain implementation
-func NewSolanaChain(config *types.ChainConfig, logger *logrus.Logger) (types.Chain, error) {
-	ctx := context.Background()
-
-	// Initialize Solana client (replace with actual client initialization)
-	client, err := initSolanaClient(config.RpcUrl)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create client")
-	}
+func NewSolanaChain(ctx context.Context, config *types.ChainConfig, logger *logrus.Logger) (types.Chain, error) {
+	// Create RPC client
+	client := rpc.New(config.RpcUrl)
 
 	chain := &solana{
 		config: config,
@@ -61,7 +60,7 @@ func NewSolanaChain(config *types.ChainConfig, logger *logrus.Logger) (types.Cha
 	builder.WithGasEstimator(chain)
 
 	if config.PrivateKey != "" {
-		signer, err := initSolanaSigner(config.PrivateKey)
+		signer, err := sol.PrivateKeyFromBase58(config.PrivateKey)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create signer")
 		}
@@ -107,18 +106,6 @@ func (s *solana) Close() {
 	s.eventHandlerMutex.Unlock()
 }
 
-// Helper functions (to be implemented by the developer if needed)
-func initSolanaClient(rpcURL string) (interface{}, error) {
-	// TODO: Implement Solana client initialization
-	return nil, nil
-}
-
-func initSolanaSigner(privateKey string) (interface{}, error) {
-	// TODO: Implement Solana signer initialization
-	return nil, nil
-}
-
-func getSolanaAddress(signer interface{}) string {
-	// TODO: Implement getting Solana address from signer
-	return ""
+func getSolanaAddress(signer sol.PrivateKey) string {
+	return signer.PublicKey().String()
 }

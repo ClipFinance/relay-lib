@@ -2,6 +2,9 @@ package evm
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/ClipFinance/relay-lib/chainmanager"
 	"github.com/ClipFinance/relay-lib/chains/evm/handler"
 	"github.com/ClipFinance/relay-lib/chains/evm/signer"
@@ -12,8 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"sync"
-	"time"
 )
 
 const (
@@ -49,15 +50,14 @@ type evm struct {
 // NewEvmChain creates a new EVM chain implementation.
 //
 // Parameters:
+// - ctx: the context for managing the request.
 // - config: the chain configuration.
 // - logger: the logger for logging events.
 //
 // Returns:
 // - types.Chain: a new EVM chain instance.
 // - error: an error if any issue occurs during creation.
-func NewEvmChain(config *types.ChainConfig, logger *logrus.Logger) (types.Chain, error) {
-	ctx := context.Background()
-
+func NewEvmChain(ctx context.Context, config *types.ChainConfig, logger *logrus.Logger) (types.Chain, error) {
 	client, err := ethclient.Dial(config.RpcUrl)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create client")
