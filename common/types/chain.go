@@ -145,11 +145,12 @@ type ChainRegistry interface {
 	// Add adds a new chain to the registry.
 	//
 	// Parameters:
+	// - ctx: the context for managing the request.
 	// - config: the configuration for the chain to add.
 	//
 	// Returns:
 	// - error: an error if adding the chain fails.
-	Add(config *ChainConfig) error
+	Add(ctx context.Context, config *ChainConfig) error
 
 	// Get retrieves a chain from the registry by its chain ID.
 	//

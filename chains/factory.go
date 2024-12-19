@@ -1,12 +1,14 @@
 package chains
 
 import (
+	"context"
+	"sync"
+
 	"github.com/ClipFinance/relay-lib/chains/evm"
 	"github.com/ClipFinance/relay-lib/chains/solana"
 	relaytypes "github.com/ClipFinance/relay-lib/common/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"sync"
 )
 
 // ChainConstructor represents a function that constructs a new chain instance.
@@ -18,7 +20,7 @@ import (
 // Returns:
 // - relaytypes.Chain: the constructed chain instance.
 // - error: an error if the chain construction fails.
-type ChainConstructor func(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error)
+type ChainConstructor func(ctx context.Context, config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error)
 
 // ChainFactory defines the interface for chain creation.
 type ChainFactory interface {
@@ -38,7 +40,7 @@ type ChainFactory interface {
 	// Returns:
 	// - relaytypes.Chain: the created chain instance.
 	// - error: an error if the chain creation fails.
-	CreateChain(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error)
+	CreateChain(ctx context.Context, config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error)
 }
 
 type chainFactory struct {
@@ -84,7 +86,7 @@ func (f *chainFactory) RegisterConstructor(chainType string, constructor ChainCo
 // Returns:
 // - relaytypes.Chain: the created chain instance.
 // - error: an error if the chain creation fails.
-func (f *chainFactory) CreateChain(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
+func (f *chainFactory) CreateChain(ctx context.Context, config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
 	f.constructorsMutex.RLock()
 	constructor, exists := f.constructors[config.ChainType]
 	f.constructorsMutex.RUnlock()
@@ -94,18 +96,18 @@ func (f *chainFactory) CreateChain(config *relaytypes.ChainConfig, logger *logru
 
 	}
 
-	return constructor(config, logger)
+	return constructor(ctx, config, logger)
 }
 
 // registerConstructors registers the blockchain constructors for the chain factory instance.
 func (f *chainFactory) registerConstructors() {
 	// Register EVM chain constructor with the factory.
-	f.RegisterConstructor(EVM.String(), func(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
-		return evm.NewEvmChain(config, logger)
+	f.RegisterConstructor(EVM.String(), func(ctx context.Context, config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
+		return evm.NewEvmChain(ctx, config, logger)
 	})
 
 	// Register Solana chain constructor with the factory.
-	f.RegisterConstructor(SOLANA.String(), func(config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
-		return solana.NewSolanaChain(config, logger)
+	f.RegisterConstructor(SOLANA.String(), func(ctx context.Context, config *relaytypes.ChainConfig, logger *logrus.Logger) (relaytypes.Chain, error) {
+		return solana.NewSolanaChain(ctx, config, logger)
 	})
 }

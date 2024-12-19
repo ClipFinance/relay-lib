@@ -3,6 +3,7 @@ package evm
 import (
 	"context"
 	"github.com/ClipFinance/relay-lib/chains/evm/generated"
+	"github.com/ClipFinance/relay-lib/chains/evm/utils"
 	"github.com/ClipFinance/relay-lib/common/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -36,7 +37,7 @@ func (e *evm) SendAsset(ctx context.Context, intent *types.Intent) (*types.Trans
 	}
 
 	var tx *ethtypes.Transaction
-	if intent.ToToken == ZeroAddress {
+	if intent.ToToken == utils.ZeroAddress {
 		tx, err = e.sendNativeAsset(ctx, intent, nonce)
 	} else {
 		tx, err = e.sendToken(ctx, intent, nonce)

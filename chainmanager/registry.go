@@ -1,9 +1,11 @@
 package chainmanager
 
 import (
+	"context"
+	"sync"
+
 	"github.com/ClipFinance/relay-lib/common/types"
 	"github.com/sirupsen/logrus"
-	"sync"
 )
 
 type blockchainRegistry struct {
@@ -11,13 +13,13 @@ type blockchainRegistry struct {
 	chains      map[uint64]types.Chain
 	chainsMutex sync.RWMutex
 	factory     interface {
-		CreateChain(*types.ChainConfig, *logrus.Logger) (types.Chain, error)
+		CreateChain(context.Context, *types.ChainConfig, *logrus.Logger) (types.Chain, error)
 	}
 	factoryMutex sync.RWMutex
 }
 
 func NewChainRegistry(factory interface {
-	CreateChain(*types.ChainConfig, *logrus.Logger) (types.Chain, error)
+	CreateChain(context.Context, *types.ChainConfig, *logrus.Logger) (types.Chain, error)
 }, logger *logrus.Logger) types.ChainRegistry {
 	return &blockchainRegistry{
 		chains:  make(map[uint64]types.Chain),
@@ -26,10 +28,10 @@ func NewChainRegistry(factory interface {
 	}
 }
 
-func (r *blockchainRegistry) Add(config *types.ChainConfig) error {
+func (r *blockchainRegistry) Add(ctx context.Context, config *types.ChainConfig) error {
 	// Lock factory for reading to prevent changes during chain creation.
 	r.factoryMutex.RLock()
-	chain, err := r.factory.CreateChain(config, r.logger)
+	chain, err := r.factory.CreateChain(ctx, config, r.logger)
 	r.factoryMutex.RUnlock()
 
 	if err != nil {

@@ -3,6 +3,7 @@ package evm
 import (
 	"context"
 	"github.com/ClipFinance/relay-lib/chains/evm/generated"
+	"github.com/ClipFinance/relay-lib/chains/evm/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -32,7 +33,7 @@ func (e *evm) GetTokenBalance(ctx context.Context, address string, tokenAddress 
 	}
 
 	// Check if requesting native token balance
-	if tokenAddress == "" || tokenAddress == ZeroAddress {
+	if tokenAddress == "" || tokenAddress == utils.ZeroAddress {
 		balance, err := client.BalanceAt(ctx, common.HexToAddress(address), nil)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to get native token balance")
