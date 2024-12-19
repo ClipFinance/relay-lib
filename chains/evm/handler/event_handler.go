@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"github.com/ClipFinance/relay-lib/chains/evm"
 	"github.com/ClipFinance/relay-lib/chains/evm/utils"
 	relaytypes "github.com/ClipFinance/relay-lib/common/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -191,8 +192,13 @@ func (h *EventHandler) processEvent(eventType string, log ethtypes.Log) error {
 		TransactionHash:   log.TxHash.String(),
 		QuoteID:           quoteId,
 		FromTxMinedAt:     time.Unix(int64(block.Time), 0),
-		FromNonce:         tx.Nonce(),
 		TransactionAmount: amount,
+		Metadata: evm.EvmMetadata{
+			EventType: eventType,
+			LogIndex:  log.Index,
+			Data:      log.Data,
+			FromNonce: tx.Nonce(),
+		},
 	}
 
 	h.eventChan <- chainEvent
